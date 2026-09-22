@@ -28,6 +28,7 @@ from .welcome import send_welcome
 log = logging.getLogger(__name__)
 
 PAGE = Path(__file__).parent / "templates" / "setup.html"
+ASSETS = Path(__file__).parent / "assets"
 IDLE_TIMEOUT = timedelta(minutes=45)
 FIRST_DIGEST_WINDOW = timedelta(days=7)
 MAX_HANDLES = 60
@@ -79,6 +80,13 @@ class Handler(BaseHTTPRequestHandler):
         if self.path.split("?")[0] == "/":
             html = PAGE.read_text().replace("__EPILOG_KEY__", self.server.key)
             return self._send(200, html.encode(), "text/html; charset=utf-8")
+        if self.path.startswith("/assets/"):
+            name = self.path.removeprefix("/assets/").split("?")[0]
+            asset = ASSETS / name
+            if name in {p.name for p in ASSETS.glob("*")} and asset.is_file():
+                kind = "image/svg+xml" if name.endswith(".svg") else "application/octet-stream"
+                return self._send(200, asset.read_bytes(), kind)
+            return self._send(404, b"Not found", "text/plain")
         if self.path == "/api/state" and self.headers.get("X-Epilog-Key") == self.server.key:
             return self._json(demo_state() if DEMO.get("on") else state())
         self._send(404, b"Not found", "text/plain")
