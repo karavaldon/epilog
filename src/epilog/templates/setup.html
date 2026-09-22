@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Epilog setup</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⁕</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #e9e7e3;
+    --card: #ffffff;
+    --ink: #111111;
+    --muted: #6f6c67;
+    --faint: #9a968f;
+    --inset: #efeeeb;
+    --line: 2px solid var(--ink);
+    --ok: #1f7a3f;
+    --bad: #b3261e;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.55 var(--sans);
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 20px 96px; }
+  a { color: inherit; }
+  button, input, textarea { font: inherit; color: inherit; }
+
+  /* header + stepper */
+  header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 36px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .mark { font: 44px/1 Georgia, "Times New Roman", serif; }
+  .brand-name { font: 600 15px/1.2 var(--mono); letter-spacing: .02em; }
+  .brand-sub { font: 13px/1.3 var(--mono); color: var(--muted); }
+  .steps { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* pills */
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: var(--line); border-radius: 999px; background: var(--card);
+    padding: 7px 16px; font: 600 14px/1.2 var(--mono); cursor: pointer;
+    text-decoration: none; white-space: nowrap;
+    transition: background .12s, transform .06s;
+  }
+  .pill:hover { background: #f6f5f2; }
+  .pill:active { transform: translateY(1px); }
+  .pill:focus-visible, .field:focus-visible, textarea:focus-visible, input[type=time]:focus-visible {
+    outline: 3px solid #7aa7ff; outline-offset: 2px;
+  }
+  .pill.primary { background: var(--ink); color: #fff; }
+  .pill.primary:hover { background: #2b2b2b; }
+  .pill.small { padding: 5px 12px; font-size: 13px; }
+  .pill[disabled] { opacity: .45; cursor: default; transform: none; }
+  .steps .pill { cursor: default; }
+  .steps .pill.todo { border-color: var(--faint); color: var(--faint); background: transparent; }
+  .steps .pill.current { background: var(--ink); color: #fff; }
+  .steps .pill.done { cursor: pointer; }
+
+  /* section divider (like "TODAY") */
+  .divider { display: flex; align-items: center; gap: 20px; margin: 8px 0 24px; }
+  .divider::before, .divider::after { content: ""; flex: 1; border-top: var(--line); }
+  .divider span { font: 600 14px/1 var(--mono); letter-spacing: .22em; text-transform: uppercase; }
+
+  /* cards */
+  .card {
+    background: var(--card); border: var(--line); border-radius: 12px;
+    padding: 20px 22px 22px; margin-bottom: 16px;
+  }
+  .meta { font: 14px/1.3 var(--mono); color: var(--faint); margin-bottom: 8px; display: flex; justify-content: space-between; gap: 12px; }
+  .card h2 { font: 600 19px/1.35 var(--sans); margin: 0 0 6px; }
+  .card p { margin: 0 0 12px; }
+  .card p:last-child { margin-bottom: 0; }
+  .muted { color: var(--muted); }
+  .small { font-size: 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+  ol.how { margin: 4px 0 12px; padding-left: 20px; }
+  ol.how li { margin-bottom: 4px; }
+  .path { font: 500 14px/1.4 var(--mono); background: var(--inset); padding: 1px 6px; border-radius: 4px; }
+  details summary { cursor: pointer; font: 600 14px/1.4 var(--mono); list-style: none; }
+  details summary::before { content: "▸ "; }
+  details[open] summary::before { content: "▾ "; }
+
+  /* fields */
+  label.lbl { display: block; font: 600 13px/1.3 var(--mono); letter-spacing: .04em; text-transform: uppercase; margin: 14px 0 6px; }
+  .fieldwrap { display: flex; gap: 8px; }
+  .field, textarea, input[type=time] {
+    width: 100%; border: var(--line); border-radius: 8px; background: var(--inset);
+    padding: 11px 14px; font: 15px/1.4 var(--mono);
+  }
+  .field::placeholder, textarea::placeholder { color: var(--faint); }
+  textarea { min-height: 150px; resize: vertical; line-height: 1.6; }
+  input[type=time] { width: auto; font-size: 28px; padding: 10px 16px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+  .chip { font: 500 13px/1 var(--mono); background: var(--inset); border: 1.5px solid var(--ink); border-radius: 999px; padding: 6px 10px; }
+
+  /* status */
+  .status { font: 500 14px/1.45 var(--mono); margin-top: 12px; white-space: pre-line; }
+  .status.ok { color: var(--ok); }
+  .status.bad { color: var(--bad); }
+  .done-line { display: flex; align-items: center; gap: 10px; font: 600 16px/1.4 var(--mono); }
+  .tick { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 14px; flex: none; }
+  .spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; display: inline-block; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* account results */
+  .acct { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1.5px solid #e6e4e0; }
+  .acct:first-child { border-top: 0; }
+  .acct img, .acct .ph { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: none; background: var(--inset); border: 1.5px solid var(--ink); }
+  .acct .who { flex: 1; min-width: 0; }
+  .acct .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .acct .handle { font: 13px/1.3 var(--mono); color: var(--muted); }
+  .tag { font: 600 12px/1 var(--mono); border-radius: 999px; padding: 6px 10px; border: 1.5px solid currentColor; white-space: nowrap; }
+  .tag.ok { color: var(--ok); }
+  .tag.bad { color: var(--bad); }
+  .tag.same { color: var(--muted); }
+  .x { border: 0; background: none; cursor: pointer; font: 18px/1 var(--mono); color: var(--muted); padding: 4px 6px; }
+  .x:hover { color: var(--ink); }
+
+  .choice { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: var(--line); border-radius: 8px; margin-top: 8px; cursor: pointer; background: var(--inset); }
+  [hidden] { display: none !important; }
+  .fade { animation: fade .18s ease-out; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  @media (max-width: 560px) {
+    main { padding: 20px 16px 72px; }
+    .card { padding: 16px 16px 18px; }
+    .fieldwrap { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand">
+      <div class="mark" aria-hidden="true">⁕</div>
+      <div>
+        <div class="brand-name">Epilog setup</div>
+        <div class="brand-sub">Runs on this computer only</div>
+      </div>
+    </div>
+    <nav class="steps" id="steps" aria-label="Setup steps"></nav>
+  </header>
+
+  <!-- INTRO -->
+  <section data-screen="intro" hidden>
+    <div class="divider"><span>Welcome</span></div>
+    <div class="card fade">
+      <div class="meta"><span>About 20–30 minutes</span></div>
+      <h2>A daily email of new posts from the Instagram accounts you choose.</h2>
+      <p class="muted">Epilog reads Instagram through its official API and emails you from your own Gmail. Everything stays on this computer.</p>
+    </div>
+    <div class="card fade">
+      <div class="meta"><span>What you'll need</span></div>
+      <ol class="how">
+        <li>Your Instagram account, switched to <b>Creator</b> or <b>Business</b> (free, and you can switch back)</li>
+        <li>A Facebook account, to create a placeholder Page and a free Meta developer app</li>
+        <li>Gmail with 2-Step Verification</li>
+      </ol>
+      <p class="muted small">Setup remembers your progress. You can close this page and pick up where you left off.</p>
+      <div class="row"><button class="pill primary" data-go="instagram">Start →</button></div>
+    </div>
+  </section>
+
+  <!-- 1. INSTAGRAM -->
+  <section data-screen="instagram" hidden>
+    <div class="divider"><span>Step 1 · Instagram</span></div>
+
+    <div class="card fade" id="ig-connected" hidden>
+      <div class="done-line"><span class="tick">✓</span><span id="ig-connected-text"></span></div>
+      <p class="muted small" id="ig-connected-note" style="margin-top:8px"></p>
+      <div class="row">
+        <button class="pill primary" data-go="gmail">Continue →</button>
+        <button class="pill" id="ig-reconnect">Reconnect</button>
+      </div>
+    </div>
+
+    <div id="ig-form">
+      <details class="card fade" id="ig-prereqs" open>
+        <summary>Before you start: Instagram, a Facebook Page and a Meta app</summary>
+        <div style="margin-top:14px">
+          <div class="meta"><span>A · Instagram app</span></div>
+          <p>Switch to a professional account: <span class="path">Settings → Account type and tools → Switch to professional account</span>. Creator or Business both work.</p>
+
+          <div class="meta" style="margin-top:18px"><span>B · Facebook</span></div>
+          <p>Create a Facebook Page. It can be a placeholder that nobody sees. Then in the Page's settings: <span class="path">Linked accounts → Instagram → Connect account</span>.</p>
+          <div class="row" style="margin-top:0"><a class="pill small" href="https://www.facebook.com/pages/create" target="_blank" rel="noopener">Create a Page ↗</a></div>
+
+          <div class="meta" style="margin-top:22px"><span>C · Meta for Developers</span></div>
+          <ol class="how">
+            <li><b>Create app</b>, then choose the use case <b>“Manage messaging &amp; content on Instagram”</b></li>
+            <li><b>Customize → API setup with Facebook login</b>, then click <b>Add required content permissions</b></li>
+            <li>Under <b>Permissions and features</b>, also add <span class="path">instagram_manage_insights</span></li>
+            <li>Leave it in <b>Development</b> mode. That's all a personal tool needs.</li>
+          </ol>
+          <div class="row" style="margin-top:0"><a class="pill small" href="https://developers.facebook.com/apps" target="_blank" rel="noopener">Open Meta for Developers ↗</a></div>
+        </div>
+      </details>
+
+      <div class="card fade">
+        <div class="meta"><span>1 · Your app's ID and secret</span><span>App settings → Basic</span></div>
+        <label class="lbl" for="app-id">App ID</label>
+        <input class="field" id="app-id" inputmode="numeric" autocomplete="off" placeholder="e.g. 1234567890123456">
+        <label class="lbl" for="app-secret">App Secret</label>
+        <div class="fieldwrap">
+          <input class="field" id="app-secret" type="password" autocomplete="off" placeholder="Click “Show” on Meta's page, then paste">
+          <button class="pill small" type="button" data-reveal="app-secret">Show</button>
+        </div>
+      </div>
+
+      <div class="card fade">
+        <div class="meta"><span>2 · Access token</span><span>Graph API Explorer</span></div>
+        <ol class="how">
+          <li>Pick your app in the <b>Meta App</b> menu (top right)</li>
+          <li><b>User or Page → Get User Access Token</b></li>
+          <li>Add these permissions:</li>
+        </ol>
+        <div class="chips" id="perm-chips"></div>
+        <div class="row" style="margin-top:8px">
+          <button class="pill small" type="button" id="copy-perms">Copy permission names</button>
+          <a class="pill small" href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener">Open Graph API Explorer ↗</a>
+        </div>
+        <ol class="how" start="4" style="margin-top:14px">
+          <li>Click <b>Generate Access Token</b>, and pick the Page linked to your Instagram when asked</li>
+          <li>Copy the token and paste it below</li>
+        </ol>
+        <label class="lbl" for="ig-token">Access token</label>
+        <div class="fieldwrap">
+          <input class="field" id="ig-token" type="password" autocomplete="off" placeholder="EAA…">
+          <button class="pill small" type="button" data-reveal="ig-token">Show</button>
+        </div>
+        <div id="page-choice" hidden>
+          <label class="lbl">Which Instagram account is yours?</label>
+          <div id="page-options"></div>
+        </div>
+        <div class="row"><button class="pill primary" id="ig-connect">Connect Instagram</button></div>
+        <div class="status" id="ig-status" role="status"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. GMAIL -->
+  <section data-screen="gmail" hidden>
+    <div class="divider"><span>Step 2 · Gmail</span></div>
+
+    <div class="card fade" id="gm-connected" hidden>
+      <div class="done-line"><span class="tick">✓</span><span id="gm-connected-text"></span></div>
+      <div class="row">
+        <button class="pill primary" data-go="time">Continue →</button>
+        <button class="pill" id="gm-change">Change</button>
+      </div>
+    </div>
+
+    <div id="gm-form">
+      <div class="card fade">
+        <div class="meta"><span>Why Gmail?</span></div>
+        <p>Epilog emails you from your own Gmail to yourself, and reads your replies so you can add accounts by email. It uses an <b>app password</b>: a separate password just for Epilog that you can revoke anytime.</p>
+      </div>
+      <div class="card fade">
+        <div class="meta"><span>1 · Turn on 2-Step Verification</span><span>skip if it's on</span></div>
+        <p class="muted">Google only offers app passwords when 2-Step Verification is on.</p>
+        <div class="row" style="margin-top:0"><a class="pill small" href="https://myaccount.google.com/signinoptions/twosv" target="_blank" rel="noopener">2-Step Verification ↗</a></div>
+      </div>
+      <div class="card fade">
+        <div class="meta"><span>2 · Create an app password</span></div>
+        <p>Name it <b>Epilog</b> and copy the 16-letter code. Make sure you're signed in to the Google account you want to use.</p>
+        <div class="row" style="margin-top:0"><a class="pill small" href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">App passwords ↗</a></div>
+        <label class="lbl" for="gm-address">Gmail address</label>
+        <input class="field" id="gm-address" type="email" autocomplete="email" placeholder="you@gmail.com">
+        <label class="lbl" for="gm-password">App password</label>
+        <div class="fieldwrap">
+          <input class="field" id="gm-password" type="password" autocomplete="off" placeholder="abcd efgh ijkl mnop">
+          <button class="pill small" type="button" data-reveal="gm-password">Show</button>
+        </div>
+        <div class="row"><button class="pill primary" id="gm-save">Check &amp; save</button></div>
+        <div class="status" id="gm-status" role="status"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. TIME -->
+  <section data-screen="time" hidden>
+    <div class="divider"><span>Step 3 · Delivery time</span></div>
+    <div class="card fade">
+      <div class="meta"><span>Every day</span></div>
+      <h2>When should your digest arrive?</h2>
+      <p class="muted small" id="time-note">Your computer needs to be awake at that time. If it's asleep, the digest arrives when it wakes.</p>
+      <input type="time" id="time" value="07:00" aria-label="Delivery time">
+      <div class="row"><button class="pill primary" id="time-save">Schedule it →</button></div>
+      <div class="status" id="time-status" role="status"></div>
+    </div>
+  </section>
+
+  <!-- 4. ACCOUNTS -->
+  <section data-screen="accounts" hidden>
+    <div class="divider"><span>Step 4 · Accounts</span></div>
+
+    <div class="card fade" id="following-card" hidden>
+      <div class="meta"><span id="following-count"></span></div>
+      <div id="following-list"></div>
+    </div>
+
+    <div class="card fade">
+      <div class="meta"><span>Add accounts</span><span>one per line</span></div>
+      <p class="muted small">Handles, @handles or profile links all work. Only <b>Business and Creator</b> accounts can be read (most brands, shops, artists and publications). Personal accounts will be flagged.</p>
+      <textarea id="handles" placeholder="@yourfavoritebakery&#10;a.local.gallery&#10;instagram.com/that.record.shop"></textarea>
+      <div class="row"><button class="pill primary" id="check">Check accounts</button></div>
+      <div class="status" id="check-status" role="status"></div>
+      <div id="results" style="margin-top:8px"></div>
+      <div class="row" id="add-row" hidden><button class="pill primary" id="add">Add accounts</button></div>
+    </div>
+
+    <div class="card fade">
+      <div class="meta"><span>Or do it by email</span></div>
+      <p class="muted small">Get a welcome email and reply with the handles instead. Handy for adding accounts from your phone.</p>
+      <div class="row" style="margin-top:0"><button class="pill small" id="welcome">Email me instead</button></div>
+      <div class="status" id="welcome-status" role="status"></div>
+    </div>
+
+    <div class="row"><button class="pill primary" id="to-done" hidden>Continue →</button></div>
+  </section>
+
+  <!-- DONE -->
+  <section data-screen="done" hidden>
+    <div class="divider"><span>All set</span></div>
+    <div class="card fade">
+      <div class="done-line"><span class="tick">✓</span><span>Epilog is set up.</span></div>
+      <ol class="how" id="summary" style="margin-top:14px"></ol>
+    </div>
+    <div class="card fade" id="first-card">
+      <div class="meta"><span>See it now</span></div>
+      <h2>Send my first digest</h2>
+      <p class="muted">Posts from the past week, from the accounts you added. It takes a minute or two.</p>
+      <div class="row" style="margin-top:0"><button class="pill primary" id="first">Send it now</button></div>
+      <div class="status" id="first-status" role="status"></div>
+    </div>
+    <div class="card fade">
+      <div class="meta"><span>Later</span></div>
+      <ol class="how">
+        <li><b>Add or remove accounts:</b> reply to any Epilog email with handles, or “remove @handle”.</li>
+        <li><b>Every ~60 days:</b> your digest will remind you to renew Instagram. Open <b>Setup Epilog</b> again and paste a fresh token (about 2 minutes).</li>
+        <li><b>Change the time:</b> open <b>Setup Epilog</b> again.</li>
+      </ol>
+      <div class="row"><button class="pill" id="finish">Finish &amp; close setup</button></div>
+    </div>
+  </section>
+
+  <section data-screen="closed" hidden>
+    <div class="divider"><span>Closed</span></div>
+    <div class="card"><p>Setup is closed. You can close this tab.</p></div>
+  </section>
+</main>
+
+<script>
+const KEY = "__EPILOG_KEY__";
+const PERMS = ["instagram_basic", "instagram_manage_insights", "pages_read_engagement", "pages_show_list", "business_management"];
+const STEPS = [["instagram", "Instagram"], ["gmail", "Gmail"], ["time", "Time"], ["accounts", "Accounts"]];
+const $ = (id) => document.getElementById(id);
+let S = null;          // server state
+let checked = [];      // last account check results
+let chosenPage = null;
+
+async function api(path, body) {
+  const res = await fetch(path, {
+    method: body === undefined ? "GET" : "POST",
+    headers: { "X-Epilog-Key": KEY, "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok && res.status !== 500) throw new Error(`Setup server answered ${res.status}. Is the Terminal window still open?`);
+  return res.json();
+}
+
+function status(id, text, kind) {
+  const el = $(id);
+  el.className = "status" + (kind ? " " + kind : "");
+  el.replaceChildren();
+  if (kind === "busy") { const s = document.createElement("span"); s.className = "spinner"; el.append(s, " "); }
+  el.append(text || "");
+}
+
+async function busy(btn, fn) {
+  btn.disabled = true;
+  try { await fn(); } catch (e) { alert(e.message); } finally { btn.disabled = false; }
+}
+
+function done(step) {
+  if (!S) return false;
+  return { instagram: S.instagram.connected, gmail: S.gmail.connected,
+           time: S.schedule.installed || !S.schedule.supported,
+           accounts: S.accounts.length > 0 || S.welcomePending }[step];
+}
+
+function show(screen) {
+  document.querySelectorAll("[data-screen]").forEach(s => s.hidden = s.dataset.screen !== screen);
+  const nav = $("steps");
+  nav.replaceChildren();
+  if (screen !== "intro" && screen !== "closed") {
+    STEPS.forEach(([key, label], i) => {
+      const b = document.createElement("button");
+      const isDone = done(key);
+      b.className = "pill small " + (key === screen ? "current" : isDone ? "done" : "todo");
+      b.textContent = (isDone && key !== screen ? "✓ " : `${i + 1} `) + label;
+      if (isDone && key !== screen) b.onclick = () => show(key);
+      else b.tabIndex = -1;
+      nav.append(b);
+    });
+  }
+  if (screen === "instagram") renderInstagram();
+  if (screen === "gmail") renderGmail();
+  if (screen === "time") renderTime();
+  if (screen === "accounts") renderAccounts();
+  if (screen === "done") renderDone();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function nextScreen() {
+  for (const [key] of STEPS) if (!done(key)) return key;
+  return "done";
+}
+
+// ---------------------------------------------------------------- Instagram
+function renderInstagram(forceForm = false) {
+  const ig = S.instagram;
+  const connected = ig.connected && !ig.expiringSoon && !forceForm;
+  $("ig-connected").hidden = !connected;
+  $("ig-form").hidden = connected;
+  if (connected) {
+    $("ig-connected-text").textContent = `Connected as @${ig.username}`;
+    $("ig-connected-note").textContent = ig.renewBy ? `Renew by ${ig.renewBy}. Your digest will remind you a week before.` : "";
+    return;
+  }
+  $("app-id").value = $("app-id").value || ig.appId || "";
+  $("app-secret").placeholder = ig.hasSecret ? "Saved. Leave blank to keep it." : "Click “Show” on Meta's page, then paste";
+  $("ig-prereqs").open = !ig.appId;
+  if (ig.connected && ig.expiringSoon) status("ig-status", `Your connection expires ${ig.renewBy}. Paste a fresh token to renew it.`);
+  else if (ig.issue) status("ig-status", `The saved connection stopped working (${ig.issue}). Paste a fresh token to reconnect.`, "bad");
+}
+
+$("perm-chips").append(...PERMS.map(p => Object.assign(document.createElement("span"), { className: "chip", textContent: p })));
+$("copy-perms").onclick = async (e) => {
+  try { await navigator.clipboard.writeText(PERMS.join(", ")); e.target.textContent = "Copied ✓"; }
+  catch { e.target.textContent = "Copy failed. Select them above."; }
+  setTimeout(() => e.target.textContent = "Copy permission names", 1800);
+};
+$("ig-reconnect").onclick = () => renderInstagram(true);
+$("ig-connect").onclick = (e) => busy(e.target, async () => {
+  status("ig-status", "Connecting to Meta…", "busy");
+  const r = await api("/api/instagram", {
+    appId: $("app-id").value, appSecret: $("app-secret").value, token: $("ig-token").value, pageId: chosenPage,
+  });
+  if (r.choose) {
+    $("page-choice").hidden = false;
+    $("page-options").replaceChildren(...r.choose.map((o, i) => {
+      const l = document.createElement("label"); l.className = "choice";
+      const input = Object.assign(document.createElement("input"), { type: "radio", name: "page", value: o.page_id });
+      input.onchange = () => { chosenPage = o.page_id; };
+      if (i === 0) { input.checked = true; chosenPage = o.page_id; }
+      l.append(input, `@${o.username} (Page: ${o.page})`);
+      return l;
+    }));
+    status("ig-status", "Pick the account above, then press Connect again.");
+    return;
+  }
+  if (r.error) return status("ig-status", r.error, "bad");
+  status("ig-status", `✓ Connected as @${r.username}.` + (r.missingScopes.length ? `\nNote: the token is missing ${r.missingScopes.join(", ")}.` : ""), "ok");
+  $("ig-token").value = ""; $("app-secret").value = "";
+  S = await api("/api/state");
+  setTimeout(() => show(nextScreen()), 900);
+});
+
+// ---------------------------------------------------------------- Gmail
+function renderGmail(forceForm = false) {
+  const connected = S.gmail.connected && !forceForm;
+  $("gm-connected").hidden = !connected;
+  $("gm-form").hidden = connected;
+  $("gm-connected-text").textContent = `Sending from ${S.gmail.address}`;
+  $("gm-address").value = $("gm-address").value || S.gmail.address || "";
+}
+$("gm-change").onclick = () => renderGmail(true);
+$("gm-save").onclick = (e) => busy(e.target, async () => {
+  status("gm-status", "Signing in to Gmail…", "busy");
+  const r = await api("/api/gmail", { address: $("gm-address").value, password: $("gm-password").value });
+  if (r.error) return status("gm-status", r.error + "\nCommon causes: the app password was made while signed in to a different Google account, or it was mistyped.", "bad");
+  status("gm-status", `✓ Gmail works. Digests will come from and go to ${r.address}.`, "ok");
+  $("gm-password").value = "";
+  S = await api("/api/state");
+  setTimeout(() => show(nextScreen()), 900);
+});
+
+// ---------------------------------------------------------------- Time
+function renderTime() {
+  $("time").value = S.schedule.time || "07:00";
+  if (!S.schedule.supported) $("time-note").textContent = "Automatic scheduling works on macOS and Linux. On this system you'll need to schedule it yourself (see the README).";
+  if (S.schedule.installed) status("time-status", "Currently scheduled. Change the time and press Schedule to update it.");
+}
+$("time-save").onclick = (e) => busy(e.target, async () => {
+  status("time-status", "Scheduling…", "busy");
+  const r = await api("/api/schedule", { time: $("time").value });
+  if (r.error) return status("time-status", r.error, "bad");
+  status("time-status", r.note || `✓ Your digest will arrive daily at ${r.label}. Replies are checked every 15 minutes.`, "ok");
+  S = await api("/api/state");
+  setTimeout(() => show(nextScreen()), 900);
+});
+
+// ---------------------------------------------------------------- Accounts
+function renderAccounts() {
+  const list = S.accounts;
+  $("following-card").hidden = !list.length;
+  $("following-count").textContent = `Following ${list.length} account${list.length === 1 ? "" : "s"}`;
+  $("following-list").replaceChildren(...list.map(h => {
+    const row = document.createElement("div"); row.className = "acct";
+    const who = document.createElement("div"); who.className = "who";
+    who.append(Object.assign(document.createElement("div"), { className: "handle", textContent: "@" + h }));
+    const x = Object.assign(document.createElement("button"), { className: "x", textContent: "×", title: `Remove @${h}` });
+    x.setAttribute("aria-label", `Remove @${h}`);
+    x.onclick = async () => { S.accounts = (await api("/api/accounts/save", { remove: [h] })).accounts; renderAccounts(); };
+    row.append(who, x);
+    return row;
+  }));
+  $("to-done").hidden = !done("accounts");
+  if (S.welcomePending) status("welcome-status", "Welcome email sent. Reply to it with handles anytime.", "ok");
+}
+
+function accountRow(r) {
+  const row = document.createElement("div"); row.className = "acct";
+  let pic;
+  if (r.avatar) { pic = Object.assign(document.createElement("img"), { src: r.avatar, alt: "", referrerPolicy: "no-referrer" }); pic.onerror = () => pic.replaceWith(Object.assign(document.createElement("div"), { className: "ph" })); }
+  else pic = Object.assign(document.createElement("div"), { className: "ph" });
+  const who = document.createElement("div"); who.className = "who";
+  who.append(
+    Object.assign(document.createElement("div"), { className: "name", textContent: r.name || "@" + r.handle }),
+    Object.assign(document.createElement("div"), { className: "handle", textContent: "@" + r.handle + (r.latest ? ` · last post ${r.latest}` : "") }),
+  );
+  const [cls, text] = r.status === "personal" ? ["bad", "personal or not found"]
+    : r.status !== "ok" ? ["bad", "couldn't check"]
+    : r.following ? ["same", "already following"]
+    : ["ok", "✓ ready"];
+  row.append(pic, who, Object.assign(document.createElement("span"), { className: "tag " + cls, textContent: text }));
+  return row;
+}
+
+$("check").onclick = (e) => busy(e.target, async () => {
+  const text = $("handles").value.trim();
+  if (!text) return status("check-status", "Add at least one handle first.", "bad");
+  status("check-status", "Checking with Instagram…", "busy");
+  $("add-row").hidden = true;
+  const r = await api("/api/accounts/check", { text });
+  if (r.error) return status("check-status", r.error, "bad");
+  checked = r.results;
+  $("results").replaceChildren(...checked.map(accountRow));
+  const ready = checked.filter(x => x.status === "ok" && !x.following);
+  const bad = checked.filter(x => x.status !== "ok");
+  status("check-status", checked.length ? `${ready.length} ready to add` + (bad.length ? ` · ${bad.length} can't be included` : "") : "No handles found. Put one per line.", ready.length ? "ok" : "bad");
+  $("add-row").hidden = !ready.length;
+  $("add").textContent = `Add ${ready.length} account${ready.length === 1 ? "" : "s"}`;
+});
+
+$("add").onclick = (e) => busy(e.target, async () => {
+  const add = checked.filter(x => x.status === "ok" && !x.following).map(x => x.handle);
+  const r = await api("/api/accounts/save", { add });
+  S.accounts = r.accounts;
+  $("handles").value = ""; $("results").replaceChildren(); $("add-row").hidden = true; checked = [];
+  status("check-status", `✓ Added ${add.length}. You're following ${r.accounts.length}.`, "ok");
+  renderAccounts();
+});
+
+$("welcome").onclick = (e) => busy(e.target, async () => {
+  status("welcome-status", "Sending…", "busy");
+  const r = await api("/api/welcome", {});
+  if (r.error) return status("welcome-status", r.error, "bad");
+  S.welcomePending = true;
+  status("welcome-status", `✓ Sent to ${r.to}. Reply with handles; you'll get a confirmation and a first digest within about 15 minutes.`, "ok");
+  renderAccounts();
+});
+$("to-done").onclick = () => show("done");
+
+// ---------------------------------------------------------------- Done
+function renderDone() {
+  const items = [
+    `Instagram: @${S.instagram.username}` + (S.instagram.renewBy ? ` (renew by ${S.instagram.renewBy})` : ""),
+    `Gmail: ${S.gmail.address}`,
+    S.schedule.installed ? `Daily digest at ${fmtTime(S.schedule.time)}` : "Daily digest: not scheduled on this system",
+    S.accounts.length ? `Following ${S.accounts.length} account${S.accounts.length === 1 ? "" : "s"}` : "Accounts: waiting for your reply to the welcome email",
+  ];
+  $("summary").replaceChildren(...items.map(t => Object.assign(document.createElement("li"), { textContent: t })));
+  $("first-card").hidden = !S.accounts.length;
+}
+function fmtTime(v) {
+  const [h, m] = (v || "07:00").split(":").map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "am" : "pm"}`;
+}
+$("first").onclick = (e) => busy(e.target, async () => {
+  status("first-status", "Gathering posts from the past week and sending…", "busy");
+  const r = await api("/api/first-digest", {});
+  if (r.error) return status("first-status", r.error, "bad");
+  status("first-status", r.posts ? `✓ Sent ${r.posts} post${r.posts === 1 ? "" : "s"} from ${r.accounts} account${r.accounts === 1 ? "" : "s"} to ${r.to}. Check your inbox.` : "Those accounts haven't posted in the past week, so there was nothing to send yet. Your daily digest will pick up new posts.", "ok");
+  e.target.textContent = "Sent ✓";
+});
+$("finish").onclick = async () => { try { await api("/api/finish", {}); } catch {} show("closed"); };
+
+// ---------------------------------------------------------------- shared
+document.querySelectorAll("[data-go]").forEach(b => b.onclick = () => show(b.dataset.go));
+document.querySelectorAll("[data-reveal]").forEach(b => b.onclick = () => {
+  const f = $(b.dataset.reveal); const hide = f.type === "text";
+  f.type = hide ? "password" : "text"; b.textContent = hide ? "Show" : "Hide";
+});
+
+(async () => {
+  try { S = await api("/api/state"); }
+  catch (e) { document.querySelector("main").innerHTML = "<div class='card'><p>Couldn't reach Epilog setup. Run Setup Epilog again and use the new link.</p></div>"; return; }
+  const next = nextScreen();
+  const asked = location.hash.slice(1);  // e.g. #gmail, to jump straight to a step
+  show(document.querySelector(`[data-screen="${asked}"]`) ? asked
+       : next === "instagram" && !S.instagram.appId ? "intro" : next);
+})();
+</script>
+</body>
+</html>

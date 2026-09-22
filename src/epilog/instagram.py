@@ -17,6 +17,15 @@ class ConnectError(Exception):
     """Something the person needs to fix on Meta's side; the message says what."""
 
 
+class ChoosePage(Exception):
+    """Several Pages with Instagram accounts are linked; ask which one, then call again."""
+
+    def __init__(self, pages: list[dict]):
+        super().__init__("Choose which Instagram account to use.")
+        self.options = [{"page_id": p["id"], "page": p["name"],
+                         "username": p["instagram_business_account"].get("username", "")} for p in pages]
+
+
 @dataclass
 class Connection:
     username: str
@@ -36,7 +45,7 @@ def connect(cfg: Config, app_id: str, app_secret: str, short_token: str,
                           access_token=None)["access_token"]
         info = graph.get("debug_token", input_token=token, access_token=f"{app_id}|{app_secret}")["data"]
         pages = Graph(token, cfg.api_version).get(
-            "me/accounts", fields="name,instagram_business_account{id,username}")["data"]
+            "me/accounts", fields="id,name,instagram_business_account{id,username}")["data"]
     except GraphError as e:
         raise ConnectError(
             f"Meta rejected the details: {e}\n"
@@ -80,6 +89,16 @@ def connect(cfg: Config, app_id: str, app_secret: str, short_token: str,
         expires_at=datetime.fromtimestamp(expires_at, tz=timezone.utc) if expires_at else None,
         missing_scopes=REQUIRED_SCOPES - set(info.get("scopes", [])),
     )
+
+
+def pick_page(page_id: str | None) -> Callable[[list[dict]], dict]:
+    """A `choose` for non-interactive callers: use page_id, or raise ChoosePage."""
+    def choose(pages: list[dict]) -> dict:
+        for p in pages:
+            if p["id"] == page_id:
+                return p
+        raise ChoosePage(pages)
+    return choose
 
 
 def check_connection(cfg: Config) -> str | None:

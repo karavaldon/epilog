@@ -142,7 +142,10 @@ def cmd_status(args) -> int:
 # ---------------------------------------------------------------- setup / schedule
 
 def cmd_setup(args) -> int:
-    return wizard.run()
+    if args.terminal:
+        return wizard.run()
+    from . import webui
+    return webui.run()
 
 
 def cmd_setup_token(args) -> int:
@@ -231,8 +234,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="epilog", description="A daily email digest of new Instagram posts.")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    sub.add_parser("setup", help="guided setup (also renews Instagram or changes the time)").set_defaults(
-        func=cmd_setup)
+    setup = sub.add_parser("setup", help="guided setup in your browser (also renews Instagram or changes the time)")
+    setup.add_argument("--terminal", action="store_true", help="use the text-only setup instead of the browser")
+    setup.set_defaults(func=cmd_setup)
     sub.add_parser("status", help="show what's connected and scheduled").set_defaults(func=cmd_status)
 
     run = sub.add_parser("run", help="fetch new posts and email the digest")

@@ -69,13 +69,21 @@ def uninstall() -> None:
 
 
 def status() -> dict[str, bool]:
-    """Which jobs are installed."""
+    """Which jobs are installed *for this Epilog folder* (a copy elsewhere doesn't count)."""
     if platform.system() == "Darwin":
-        return {name: _plist_path(label).exists() for name, (_, label) in JOBS.items()}
+        return {name: _plist_points_here(label) for name, (_, label) in JOBS.items()}
     if platform.system() == "Linux":
-        lines = [l for l in _read_crontab() if CRON_MARKER in l]
+        lines = [l for l in _read_crontab() if CRON_MARKER in l and f"EPILOG_HOME='{DATA_DIR}'" in l]
         return {name: any(f"'epilog' '{cmd}'" in l for l in lines) for name, (cmd, _) in JOBS.items()}
     return {name: False for name in JOBS}
+
+
+def _plist_points_here(label: str) -> bool:
+    try:
+        with _plist_path(label).open("rb") as f:
+            return plistlib.load(f).get("EnvironmentVariables", {}).get("EPILOG_HOME") == str(DATA_DIR)
+    except (OSError, plistlib.InvalidFileException):
+        return False
 
 
 def _command(cmd: str) -> list[str]:

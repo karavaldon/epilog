@@ -33,8 +33,15 @@ Setup takes **20–30 minutes** the first time. Most of that is on Meta's websit
 
 1. **[Download Epilog](https://github.com/karavaldon/epilog/archive/refs/heads/main.zip)** and unzip it. Move the folder somewhere permanent, like your Documents folder, because Epilog runs from wherever the folder is.
 2. Open the folder and double-click **Setup Epilog**.
-   > The first time, macOS may say it "can't be opened because it is from an unidentified developer." Right-click (or Control-click) **Setup Epilog**, choose **Open**, then **Open** again.
-3. Follow the steps in the Terminal window.
+3. macOS will block it the first time, because it's a script downloaded from the internet. To allow it:
+   1. Close the warning.
+   2. Open **System Settings → Privacy & Security**.
+   3. Scroll to **Security**, find *"Setup Epilog.command" was blocked*, and click **Open Anyway**.
+   4. Double-click **Setup Epilog** again and choose **Open Anyway**.
+
+   You only need to do this once.
+   > Prefer Terminal? `xattr -dr com.apple.quarantine /path/to/epilog-main` clears the block, then double-click as normal.
+4. Setup opens in your web browser. Keep the small Terminal window that also appears open until you finish.
 
 ### Linux, or if you prefer the terminal
 
@@ -46,12 +53,15 @@ cd epilog
 
 ## What setup does
 
-1. **Connect Instagram.** It explains how to make your account professional, link a Page, create a Meta app and generate a token, and can open each page for you. Then it checks the connection works.
+Setup is a page in your browser that talks only to Epilog on your own computer.
+
+1. **Connect Instagram.** It explains how to make your account professional, link a Page, create a Meta app and generate a token, with links to each page. Then it checks the connection works.
 2. **Connect Gmail.** You create an app password: a separate password just for Epilog, which you can revoke anytime. Epilog sends from your Gmail to yourself and reads your replies to its emails.
 3. **Choose a delivery time.** It schedules the daily digest, plus a check for your replies every 15 minutes.
-4. **Pick accounts.** You get a welcome email. Reply with the handles you want to follow, one per line. Within about 15 minutes you'll get a confirmation, followed by a first digest of the past week.
+4. **Pick accounts.** Paste handles and Epilog checks each one, showing which it can read and which are personal accounts. Or get a welcome email and add them by replying.
+5. **Send your first digest.** Optionally get the past week's posts right away.
 
-You can stop and restart setup anytime; it remembers finished steps.
+You can stop and restart setup anytime; it remembers finished steps. If you prefer text, run `uv run epilog setup --terminal`.
 
 ## Using Epilog
 
