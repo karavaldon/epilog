@@ -66,10 +66,6 @@
   .steps .pill.current { background: var(--key); }
   .steps .pill.done { cursor: pointer; }
 
-  /* section divider */
-  .divider { display: flex; align-items: center; gap: 16px; margin: 4px 0 20px; }
-  .divider::before, .divider::after { content: ""; flex: 1; border-top: var(--line); }
-  .divider span { font: 500 12px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
 
   /* cards */
   .card {
@@ -82,15 +78,16 @@
   }
   .meta span:last-child:not(:first-child) { color: var(--faint); text-transform: none; letter-spacing: 0; }
   .card h2 { font: 600 22px/1.3 var(--sans); margin: 0 0 14px; }
-  .card p { font: 12px/1.7 var(--mono); margin: 0 0 14px; }
+  .card p { font: 15px/1.6 var(--sans); margin: 0 0 14px; }
   .card p:last-child { margin-bottom: 0; }
   .muted { color: var(--muted); }
-  .small { font-size: 12px; }
+  .small { font-size: 13px; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 18px; }
-  ol.how { font: 12px/1.7 var(--mono); margin: 4px 0 14px; padding-left: 20px; }
+  ol.how { font: 15px/1.6 var(--sans); margin: 4px 0 14px; padding-left: 22px; }
+  ol.how::marker, ol.how li::marker { font: 500 13px var(--mono); color: var(--accent); }
   ol.how li { margin-bottom: 12px; }
   ol.how li:last-child { margin-bottom: 0; }
-  .path { font: 500 12px/1.5 var(--mono); background: var(--inset); border: 1.5px solid var(--ink); padding: 1px 6px; border-radius: 6px; }
+  .path { font: 500 13px/1.5 var(--mono); background: var(--inset); border: 1.5px solid var(--ink); padding: 1px 6px; border-radius: 6px; }
   details summary { cursor: pointer; font: 600 12px/1.5 var(--mono); list-style: none; text-transform: uppercase; letter-spacing: .04em; }
   details summary::before { content: "▸ "; }
   details[open] summary::before { content: "▾ "; }
@@ -109,7 +106,7 @@
   .chip { font: 500 12px/1 var(--mono); background: var(--inset); border: 2px solid var(--ink); border-radius: 8px; padding: 7px 10px; }
 
   /* status */
-  .status { font: 500 12px/1.6 var(--mono); margin-top: 14px; white-space: pre-line; }
+  .status { font: 14px/1.55 var(--sans); margin-top: 14px; white-space: pre-line; }
   .status.ok { color: var(--ok); }
   .status.bad { color: var(--bad); }
   .done-line { display: flex; align-items: center; gap: 12px; font: 600 16px/1.4 var(--sans); }
@@ -131,7 +128,44 @@
   .x { border: 0; background: none; cursor: pointer; font: 18px/1 var(--mono); color: var(--muted); padding: 4px 6px; }
   .x:hover { color: var(--ink); }
 
-  .choice { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: var(--line); border-radius: var(--radius-sm); margin-top: 8px; cursor: pointer; background: var(--inset); font: 12px/1.5 var(--mono); }
+  .choice { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: var(--line); border-radius: var(--radius-sm); margin-top: 8px; cursor: pointer; background: var(--inset); font: 14px/1.5 var(--sans); }
+  /* prerequisite checkboxes */
+  .check {
+    display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none;
+    margin-top: 18px; padding: 12px 14px; background: var(--inset);
+    border: 2px solid var(--ink); border-radius: var(--radius-sm);
+    font: 600 14px/1.4 var(--sans);
+  }
+  .check input {
+    appearance: none; width: 22px; height: 22px; flex: none; margin: 0;
+    border: 2px solid var(--ink); border-radius: 6px; background: var(--card); cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .check input:checked { background: var(--key); }
+  .check input:checked::after { content: "✓"; font: 700 13px/1 var(--mono); color: var(--ink); }
+  .check input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .check:has(input:checked) { background: var(--card); }
+
+  .demo-wrap { position: fixed; top: 14px; right: 14px; z-index: 10; }
+  .demo-chip {
+    background: var(--key); border: 2px solid var(--ink); border-radius: 8px;
+    padding: 5px 10px; font: 600 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+  }
+  .demo-chip:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .demo-menu {
+    position: absolute; top: calc(100% + 6px); right: 0; min-width: 190px;
+    background: var(--card); border: 2px solid var(--ink); border-radius: var(--radius-sm);
+    padding: 6px; box-shadow: 4px 4px 0 rgba(0,0,0,.12);
+  }
+  .demo-menu p { font: 500 10px/1.4 var(--mono); color: var(--faint); text-transform: uppercase;
+                 letter-spacing: .08em; margin: 4px 8px 6px; }
+  .demo-menu button {
+    display: block; width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
+    padding: 7px 8px; border-radius: 6px; font: 500 12px/1.3 var(--mono);
+  }
+  .demo-menu button:hover, .demo-menu button:focus-visible { background: var(--inset); }
+  .demo-menu button[aria-current="true"] { background: var(--key); font-weight: 600; }
   [hidden] { display: none !important; }
   .fade { animation: fade .18s ease-out; }
   @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
@@ -144,6 +178,11 @@
 </style>
 </head>
 <body>
+<div class="demo-wrap" id="demo-banner" hidden>
+  <button class="demo-chip" id="demo-chip" aria-haspopup="menu" aria-expanded="false"
+          title="Nothing is saved, sent or scheduled. Run `uv run epilog setup` for the real thing.">Demo ▾</button>
+  <div class="demo-menu" id="demo-menu" role="menu" hidden></div>
+</div>
 <main>
   <header>
     <img class="mark" src="/assets/shape-04.svg" width="150" height="150" alt="">
@@ -152,14 +191,8 @@
     <nav class="steps" id="steps" aria-label="Setup steps"></nav>
   </header>
 
-  <div class="card fade" id="demo-banner" hidden style="background:#111; color:#fff; border-color:#111">
-    <div class="meta" style="color:#bdbab5"><span>Demo mode</span><span>epilog setup --demo</span></div>
-    <p style="margin:0">Nothing here is saved, sent or scheduled, and no real accounts are read. The fields are pre-filled, so you can press the buttons and see every step. Run <span class="path" style="background:#333;color:#fff">uv run epilog setup</span> for the real thing.</p>
-  </div>
-
   <!-- INTRO -->
   <section data-screen="intro" hidden>
-    <div class="divider"><span>Welcome</span></div>
     <div class="card fade">
       <div class="meta"><span>Setup takes 10–20 min</span></div>
       <h2>A daily email of new posts from the Instagram accounts you choose.</h2>
@@ -174,12 +207,50 @@
       </ol>
       <p class="muted">Setup remembers your progress. You can close this page and pick up where you left off.</p>
     </div>
-    <div class="row" style="justify-content:flex-end"><button class="pill primary" data-go="instagram">Start →</button></div>
+    <div class="row" style="justify-content:flex-end"><button class="pill primary" data-go="prep">Start →</button></div>
+  </section>
+
+  <!-- 1. BEFORE YOU START -->
+  <section data-screen="prep" hidden>
+    <div class="card fade">
+      <div class="meta"><span>Before you start</span><span>about 15 min</span></div>
+      <h2>Three things to set up on Instagram and Facebook.</h2>
+      <p>Instagram only allows apps to read posts through a professional account linked to a Facebook Page. Tick each one off as you go; this page remembers them.</p>
+    </div>
+
+    <div class="card fade">
+      <div class="meta"><span>A · Instagram app</span></div>
+      <p>Switch to a professional account: <span class="path">Settings → Account type and tools → Switch to professional account</span>. Creator or Business both work. It's free and you can switch back later.</p>
+      <label class="check"><input type="checkbox" data-prereq="ig"><span>My Instagram is Creator or Business</span></label>
+    </div>
+
+    <div class="card fade">
+      <div class="meta"><span>B · Facebook Page</span></div>
+      <p>Create a Page — a placeholder nobody sees is fine. Then, in the Page's settings: <span class="path">Linked accounts → Instagram → Connect account</span>.</p>
+      <div class="row" style="margin-top:0"><a class="pill small" href="https://www.facebook.com/pages/create" target="_blank" rel="noopener">Create a Page ↗</a></div>
+      <label class="check"><input type="checkbox" data-prereq="page"><span>My Page is linked to my Instagram</span></label>
+    </div>
+
+    <div class="card fade">
+      <div class="meta"><span>C · Meta developer app</span></div>
+      <ol class="how">
+        <li><b>Create app</b>, then choose the use case <b>“Manage messaging &amp; content on Instagram”</b></li>
+        <li><b>Customize → API setup with Facebook login</b>, then click <b>Add required content permissions</b></li>
+        <li>Under <b>Permissions and features</b>, also add <span class="path">instagram_manage_insights</span></li>
+        <li>Leave it in <b>Development</b> mode. That's all a personal tool needs.</li>
+      </ol>
+      <div class="row" style="margin-top:0"><a class="pill small" href="https://developers.facebook.com/apps" target="_blank" rel="noopener">Open Meta for Developers ↗</a></div>
+      <label class="check"><input type="checkbox" data-prereq="app"><span>My app is created</span></label>
+    </div>
+
+    <div class="row" style="justify-content:space-between">
+      <span class="status" id="prep-count" style="margin:0"></span>
+      <button class="pill primary" data-go="instagram">Continue →</button>
+    </div>
   </section>
 
   <!-- 1. INSTAGRAM -->
   <section data-screen="instagram" hidden>
-    <div class="divider"><span>Step 1 · Instagram</span></div>
 
     <div class="card fade" id="ig-connected" hidden>
       <div class="done-line"><span class="tick">✓</span><span id="ig-connected-text"></span></div>
@@ -191,27 +262,6 @@
     </div>
 
     <div id="ig-form">
-      <details class="card fade" id="ig-prereqs" open>
-        <summary>Before you start: Instagram, a Facebook Page and a Meta app</summary>
-        <div style="margin-top:14px">
-          <div class="meta"><span>A · Instagram app</span></div>
-          <p>Switch to a professional account: <span class="path">Settings → Account type and tools → Switch to professional account</span>. Creator or Business both work.</p>
-
-          <div class="meta" style="margin-top:18px"><span>B · Facebook</span></div>
-          <p>Create a Facebook Page. It can be a placeholder that nobody sees. Then in the Page's settings: <span class="path">Linked accounts → Instagram → Connect account</span>.</p>
-          <div class="row" style="margin-top:0"><a class="pill small" href="https://www.facebook.com/pages/create" target="_blank" rel="noopener">Create a Page ↗</a></div>
-
-          <div class="meta" style="margin-top:22px"><span>C · Meta for Developers</span></div>
-          <ol class="how">
-            <li><b>Create app</b>, then choose the use case <b>“Manage messaging &amp; content on Instagram”</b></li>
-            <li><b>Customize → API setup with Facebook login</b>, then click <b>Add required content permissions</b></li>
-            <li>Under <b>Permissions and features</b>, also add <span class="path">instagram_manage_insights</span></li>
-            <li>Leave it in <b>Development</b> mode. That's all a personal tool needs.</li>
-          </ol>
-          <div class="row" style="margin-top:0"><a class="pill small" href="https://developers.facebook.com/apps" target="_blank" rel="noopener">Open Meta for Developers ↗</a></div>
-        </div>
-      </details>
-
       <div class="card fade">
         <div class="meta"><span>1 · Your app's ID and secret</span><span>App settings → Basic</span></div>
         <label class="lbl" for="app-id">App ID</label>
@@ -256,7 +306,6 @@
 
   <!-- 2. GMAIL -->
   <section data-screen="gmail" hidden>
-    <div class="divider"><span>Step 2 · Gmail</span></div>
 
     <div class="card fade" id="gm-connected" hidden>
       <div class="done-line"><span class="tick">✓</span><span id="gm-connected-text"></span></div>
@@ -295,7 +344,6 @@
 
   <!-- 3. TIME -->
   <section data-screen="time" hidden>
-    <div class="divider"><span>Step 3 · Delivery time</span></div>
     <div class="card fade">
       <div class="meta"><span>Every day</span></div>
       <h2>When should your digest arrive?</h2>
@@ -308,7 +356,6 @@
 
   <!-- 4. ACCOUNTS -->
   <section data-screen="accounts" hidden>
-    <div class="divider"><span>Step 4 · Accounts</span></div>
 
     <div class="card fade" id="following-card" hidden>
       <div class="meta"><span id="following-count"></span></div>
@@ -337,7 +384,6 @@
 
   <!-- DONE -->
   <section data-screen="done" hidden>
-    <div class="divider"><span>All set</span></div>
     <div class="card fade">
       <div class="done-line"><span class="tick">✓</span><span>Epilog is set up.</span></div>
       <ol class="how" id="summary" style="margin-top:14px"></ol>
@@ -361,7 +407,6 @@
   </section>
 
   <section data-screen="closed" hidden>
-    <div class="divider"><span>Closed</span></div>
     <div class="card"><p>Setup is closed. You can close this tab.</p></div>
   </section>
 </main>
@@ -369,7 +414,9 @@
 <script>
 const KEY = "__EPILOG_KEY__";
 const PERMS = ["instagram_basic", "instagram_manage_insights", "pages_read_engagement", "pages_show_list", "business_management"];
-const STEPS = [["instagram", "Instagram"], ["gmail", "Gmail"], ["time", "Time"], ["accounts", "Accounts"]];
+const STEPS = [["prep", "Prep"], ["instagram", "Instagram"], ["gmail", "Gmail"], ["time", "Time"], ["accounts", "Accounts"]];
+const PREREQS = ["ig", "page", "app"];
+const PREP_KEY = "epilog.prereqs";
 const $ = (id) => document.getElementById(id);
 let S = null;          // server state
 let checked = [];      // last account check results
@@ -398,9 +445,31 @@ async function busy(btn, fn) {
   try { await fn(); } catch (e) { alert(e.message); } finally { btn.disabled = false; }
 }
 
+function prereqsTicked() {
+  try { return JSON.parse(localStorage.getItem(PREP_KEY) || "[]"); } catch { return []; }
+}
+function savePrereqs(list) {
+  try { localStorage.setItem(PREP_KEY, JSON.stringify(list)); } catch {}
+}
+function renderPrep() {
+  const ticked = prereqsTicked();
+  document.querySelectorAll("[data-prereq]").forEach(b => b.checked = ticked.includes(b.dataset.prereq));
+  const n = ticked.length;
+  const el = $("prep-count");
+  el.className = "status" + (n === PREREQS.length ? " ok" : "");
+  el.textContent = n === PREREQS.length ? "All three done ✓" : `${n} of ${PREREQS.length} done`;
+}
+document.querySelectorAll("[data-prereq]").forEach(box => box.onchange = () => {
+  const ticked = PREREQS.filter(k => document.querySelector(`[data-prereq="${k}"]`).checked);
+  savePrereqs(ticked);
+  renderPrep();
+  if (S) show("prep");   // refresh the step pills
+});
+
 function done(step) {
   if (!S) return false;
-  return { instagram: S.instagram.connected, gmail: S.gmail.connected,
+  return { prep: prereqsTicked().length === PREREQS.length || S.instagram.connected,
+           instagram: S.instagram.connected, gmail: S.gmail.connected,
            time: S.schedule.installed || !S.schedule.supported,
            accounts: S.accounts.length > 0 || S.welcomePending }[step];
 }
@@ -420,6 +489,7 @@ function show(screen) {
       nav.append(b);
     });
   }
+  if (screen === "prep") renderPrep();
   if (screen === "instagram") renderInstagram();
   if (screen === "gmail") renderGmail();
   if (screen === "time") renderTime();
@@ -446,7 +516,6 @@ function renderInstagram(forceForm = false) {
   }
   $("app-id").value = $("app-id").value || ig.appId || "";
   $("app-secret").placeholder = ig.hasSecret ? "Saved. Leave blank to keep it." : "Click “Show” on Meta's page, then paste";
-  $("ig-prereqs").open = !ig.appId;
   if (ig.connected && ig.expiringSoon) status("ig-status", `Your connection expires ${ig.renewBy}. Paste a fresh token to renew it.`);
   else if (ig.issue) status("ig-status", `The saved connection stopped working (${ig.issue}). Paste a fresh token to reconnect.`, "bad");
 }
@@ -620,11 +689,39 @@ document.querySelectorAll("[data-reveal]").forEach(b => b.onclick = () => {
   f.type = hide ? "password" : "text"; b.textContent = hide ? "Show" : "Hide";
 });
 
+// Demo-only: jump straight to any screen.
+function setupDemoMenu() {
+  const menu = $("demo-menu"), chip = $("demo-chip");
+  const screens = [["intro", "Welcome"], ...STEPS.map(([k, l]) => [k, l === "Prep" ? "Before you start" : l]),
+                   ["done", "All set"]];
+  menu.replaceChildren(Object.assign(document.createElement("p"), { textContent: "Jump to" }),
+    ...screens.map(([key, label]) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.setAttribute("role", "menuitem"); b.textContent = label;
+      b.onclick = () => { toggleMenu(false); show(key); };
+      return b;
+    }));
+  const toggleMenu = (open) => {
+    menu.hidden = !open;
+    chip.setAttribute("aria-expanded", String(open));
+    if (open) {
+      const current = document.querySelector("[data-screen]:not([hidden])")?.dataset.screen;
+      [...menu.querySelectorAll("button")].forEach((b, i) =>
+        b.setAttribute("aria-current", String(screens[i][0] === current)));
+      menu.querySelector("button").focus();
+    }
+  };
+  chip.onclick = (e) => { e.stopPropagation(); toggleMenu(menu.hidden); };
+  document.addEventListener("click", (e) => { if (!menu.hidden && !menu.contains(e.target)) toggleMenu(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !menu.hidden) { toggleMenu(false); chip.focus(); } });
+}
+
 (async () => {
   try { S = await api("/api/state"); }
   catch (e) { document.querySelector("main").innerHTML = "<div class='card'><p>Couldn't reach Epilog setup. Run Setup Epilog again and use the new link.</p></div>"; return; }
   if (S.demo) {
     $("demo-banner").hidden = false;
+    setupDemoMenu();
     $("app-id").value = "1234567890123456";
     $("app-secret").value = "demo-app-secret";
     $("ig-token").value = "EAADemoToken000";
@@ -635,7 +732,7 @@ document.querySelectorAll("[data-reveal]").forEach(b => b.onclick = () => {
   const next = nextScreen();
   const asked = location.hash.slice(1);  // e.g. #gmail, to jump straight to a step
   show(document.querySelector(`[data-screen="${asked}"]`) ? asked
-       : next === "instagram" && !S.instagram.appId ? "intro" : next);
+       : next === "prep" && !prereqsTicked().length && !S.instagram.appId ? "intro" : next);
 })();
 </script>
 </body>
