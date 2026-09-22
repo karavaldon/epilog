@@ -147,6 +147,11 @@
     <nav class="steps" id="steps" aria-label="Setup steps"></nav>
   </header>
 
+  <div class="card fade" id="demo-banner" hidden style="background:#111; color:#fff; border-color:#111">
+    <div class="meta" style="color:#bdbab5"><span>Demo mode</span><span>epilog setup --demo</span></div>
+    <p style="margin:0">Nothing here is saved, sent or scheduled, and no real accounts are read. The fields are pre-filled, so you can press the buttons and see every step. Run <span class="path" style="background:#333;color:#fff">uv run epilog setup</span> for the real thing.</p>
+  </div>
+
   <!-- INTRO -->
   <section data-screen="intro" hidden>
     <div class="divider"><span>Welcome</span></div>
@@ -613,6 +618,15 @@ document.querySelectorAll("[data-reveal]").forEach(b => b.onclick = () => {
 (async () => {
   try { S = await api("/api/state"); }
   catch (e) { document.querySelector("main").innerHTML = "<div class='card'><p>Couldn't reach Epilog setup. Run Setup Epilog again and use the new link.</p></div>"; return; }
+  if (S.demo) {
+    $("demo-banner").hidden = false;
+    $("app-id").value = "1234567890123456";
+    $("app-secret").value = "demo-app-secret";
+    $("ig-token").value = "EAADemoToken000";
+    $("gm-address").value = "you@gmail.com";
+    $("gm-password").value = "demo demo demo";
+    $("handles").value = "flitchcoffee\n@sillygooseceramics\nnorthernsouthern\ninstagram.com/nytcooking\nartist.run.club";
+  }
   const next = nextScreen();
   const asked = location.hash.slice(1);  // e.g. #gmail, to jump straight to a step
   show(document.querySelector(`[data-screen="${asked}"]`) ? asked

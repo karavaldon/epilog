@@ -145,7 +145,7 @@ def cmd_setup(args) -> int:
     if args.terminal:
         return wizard.run()
     from . import webui
-    return webui.run()
+    return webui.run(demo=args.demo)
 
 
 def cmd_setup_token(args) -> int:
@@ -236,6 +236,8 @@ def main() -> None:
 
     setup = sub.add_parser("setup", help="guided setup in your browser (also renews Instagram or changes the time)")
     setup.add_argument("--terminal", action="store_true", help="use the text-only setup instead of the browser")
+    setup.add_argument("--demo", action="store_true",
+                       help="walk through setup with invented answers; nothing is saved, sent or scheduled")
     setup.set_defaults(func=cmd_setup)
     sub.add_parser("status", help="show what's connected and scheduled").set_defaults(func=cmd_status)
 

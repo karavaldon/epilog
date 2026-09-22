@@ -80,7 +80,7 @@ class Handler(BaseHTTPRequestHandler):
             html = PAGE.read_text().replace("__EPILOG_KEY__", self.server.key)
             return self._send(200, html.encode(), "text/html; charset=utf-8")
         if self.path == "/api/state" and self.headers.get("X-Epilog-Key") == self.server.key:
-            return self._json(state())
+            return self._json(demo_state() if DEMO.get("on") else state())
         self._send(404, b"Not found", "text/plain")
 
     def do_POST(self):
@@ -93,7 +93,8 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             return self._json({"error": "Bad request."}, 400)
 
-        route = ROUTES.get(self.path)
+        routes = DEMO_ROUTES if DEMO.get("on") else ROUTES
+        route = routes.get(self.path)
         if not route:
             return self._json({"error": "Not found."}, 404)
         try:
@@ -261,6 +262,110 @@ def api_finish(body: dict) -> dict:
     return {"ok": True}
 
 
+# ---------------------------------------------------------------- demo mode
+# `epilog setup --demo` walks the same pages with invented answers: nothing is
+# saved, sent or scheduled. Useful for a look around, screenshots or a video.
+
+DEMO: dict = {"on": False}
+DEMO_PERSONAL = {"artist.run.club", "a_friend", "another.friend", "phillip_niemeyer"}
+DEMO_NAMES = {"flitchcoffee": "Flitch Coffee", "marthastewart": "Martha Stewart",
+              "sillygooseceramics": "silly goose ceramics", "nytcooking": "NYT Cooking",
+              "northernsouthern": "Northern-Southern", "ftlonesome": "FT. LONESOME"}
+
+
+def _demo_reset() -> None:
+    DEMO.update(on=True, username="", gmail="", time="07:00", scheduled=False,
+                accounts=[], welcome=False)
+
+
+def demo_state() -> dict:
+    renew = (datetime.now() + timedelta(days=60)).strftime("%b %-d, %Y")
+    return {
+        "demo": True,
+        "dataDir": "(demo — nothing is saved)",
+        "instagram": {"connected": bool(DEMO["username"]), "issue": None, "username": DEMO["username"],
+                      "renewBy": renew if DEMO["username"] else None, "expiringSoon": False,
+                      "appId": "", "hasSecret": False},
+        "gmail": {"connected": bool(DEMO["gmail"]), "address": DEMO["gmail"]},
+        "schedule": {"supported": True, "installed": DEMO["scheduled"], "time": DEMO["time"]},
+        "accounts": DEMO["accounts"],
+        "welcomePending": DEMO["welcome"],
+    }
+
+
+def demo_instagram(body: dict) -> dict:
+    time.sleep(1.2)
+    if not (body.get("appId") or "").strip():
+        return {"error": "Fill in the App ID, App Secret and access token."}
+    token = (body.get("token") or "").strip()
+    if len(token) < 6:
+        return {"error": "Meta rejected the details: that doesn't look like an access token.\n"
+                         "(Demo tip: type any six characters to continue.)"}
+    DEMO["username"] = "demo.account"
+    return {"ok": True, "username": DEMO["username"],
+            "renewBy": (datetime.now() + timedelta(days=60)).strftime("%b %-d, %Y"), "missingScopes": []}
+
+
+def demo_gmail(body: dict) -> dict:
+    time.sleep(1.0)
+    address = (body.get("address") or "").strip().lower()
+    if "@" not in address:
+        return {"error": "Enter your Gmail address."}
+    if not (body.get("password") or "").strip():
+        return {"error": "Gmail didn't accept that address and app password.\n"
+                         "(Demo tip: type anything as the app password to continue.)"}
+    DEMO["gmail"] = address
+    return {"ok": True, "address": address}
+
+
+def demo_schedule(body: dict) -> dict:
+    time.sleep(0.6)
+    try:
+        hour, minute = schedule.parse_time(body.get("time") or "07:00")
+    except ValueError as e:
+        return {"error": str(e)}
+    DEMO.update(time=f"{hour:02d}:{minute:02d}", scheduled=True)
+    return {"ok": True, "time": DEMO["time"], "label": schedule.format_time(hour, minute)}
+
+
+def demo_check_accounts(body: dict) -> dict:
+    from .inbox import parse_handles
+
+    adds, _ = parse_handles(str(body.get("text") or ""))
+    results = []
+    for i, handle in enumerate(adds[:MAX_HANDLES]):
+        time.sleep(0.35)
+        item = {"handle": handle, "following": handle in DEMO["accounts"]}
+        if handle in DEMO_PERSONAL:
+            item["status"] = "personal"
+        else:
+            item.update(status="ok", name=DEMO_NAMES.get(handle, handle.replace(".", " ").title()),
+                        avatar=f"https://picsum.photos/seed/{handle}/200",
+                        latest=(datetime.now() - timedelta(days=i % 5)).strftime("%b %-d"))
+        results.append(item)
+    return {"results": results}
+
+
+def demo_save_accounts(body: dict) -> dict:
+    for h in body.get("add", []):
+        if h not in DEMO["accounts"]:
+            DEMO["accounts"].append(h)
+    DEMO["accounts"] = [h for h in DEMO["accounts"] if h not in set(body.get("remove", []))]
+    return {"ok": True, "accounts": DEMO["accounts"]}
+
+
+def demo_welcome(body: dict) -> dict:
+    time.sleep(0.8)
+    DEMO["welcome"] = True
+    return {"ok": True, "to": DEMO["gmail"] or "you@gmail.com"}
+
+
+def demo_first_digest(body: dict) -> dict:
+    time.sleep(2.0)
+    n = len(DEMO["accounts"])
+    return {"ok": True, "posts": max(n * 2, 3), "accounts": n, "to": DEMO["gmail"] or "you@gmail.com"}
+
+
 ROUTES = {
     "/api/instagram": api_instagram,
     "/api/gmail": api_gmail,
@@ -269,6 +374,17 @@ ROUTES = {
     "/api/accounts/save": api_save_accounts,
     "/api/welcome": api_welcome,
     "/api/first-digest": api_first_digest,
+    "/api/finish": api_finish,
+}
+
+DEMO_ROUTES = {
+    "/api/instagram": demo_instagram,
+    "/api/gmail": demo_gmail,
+    "/api/schedule": demo_schedule,
+    "/api/accounts/check": demo_check_accounts,
+    "/api/accounts/save": demo_save_accounts,
+    "/api/welcome": demo_welcome,
+    "/api/first-digest": demo_first_digest,
     "/api/finish": api_finish,
 }
 
@@ -281,11 +397,13 @@ def _free_port() -> int:
         return s.getsockname()[1]
 
 
-def run() -> int:
+def run(demo: bool = False) -> int:
+    if demo:
+        _demo_reset()
     server = SetupServer(_free_port())
     threading.Thread(target=server.serve_forever, daemon=True).start()
     opened = webbrowser.open(server.url)
-    print("\n⁕ Epilog setup")
+    print("\n⁕ Epilog setup" + (" (demo — nothing is saved, sent or scheduled)" if demo else ""))
     print("Setup is open in your browser." if opened else "Open this link in your browser to set up Epilog:")
     print(f"  {server.url}\n")
     print("Keep this window open until you've finished. (Ctrl-C to stop.)")
