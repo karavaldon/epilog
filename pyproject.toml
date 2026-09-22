@@ -1,0 +1,25 @@
+[project]
+name = "epilog"
+version = "1.0.0"
+description = "A daily email of new posts from the Instagram accounts you choose, using Instagram's official API"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Kara Valdon" }]
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.32",
+    "jinja2>=3.1",
+    "pillow>=11.0",
+    "python-dotenv>=1.0",
+]
+
+[project.urls]
+Homepage = "https://karavaldon.com/epilog"
+
+[project.scripts]
+epilog = "epilog.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

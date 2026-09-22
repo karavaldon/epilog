@@ -1,0 +1,33 @@
+{{ d.preheader }}
+
+⁕ {{ d.generated_at.strftime("%A, %B %-d") }}
+{% for n in d.notices %}
+
+! {{ n }}
+{% endfor %}
+{% if not d.post_count %}
+
+No new posts since the last digest.
+{% endif %}
+{% for a in d.accounts %}
+
+
+{{ a.name }} (@{{ a.username }})
+{% for p in a.posts %}
+
+  {{ p.timestamp|when }}{% if p.kind == "video" %} · Video{% elif p.kind == "carousel" %} · {{ p.count }} photos{% endif %}
+
+  {{ p.caption|replace("\n", " ") }}
+  {{ p.permalink }}
+{% endfor %}
+{% endfor %}
+
+
+To add accounts, reply with their handles, one per line ("add @handle" works too). To stop following one, reply "remove @handle".
+
+Epilog is a free, open-source project using Instagram's official API: https://karavaldon.com/epilog
+{% if d.unsupported %}
+
+
+Not available through Instagram's API: {% for u in d.unsupported %}@{{ u }}{% if not loop.last %}, {% endif %}{% endfor %}
+{% endif %}
