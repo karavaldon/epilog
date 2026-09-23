@@ -23,11 +23,12 @@ No new posts since the last digest.
 {% endfor %}
 
 
-To add accounts, reply with their handles, one per line ("add @handle" works too). To stop following one, reply "remove @handle".
-
-Epilog is a free, open-source project using Instagram's official API: https://karavaldon.com/epilog
+To add accounts, reply to this email with their handles, one per line ("add @handle" works too). To stop following one, reply "remove @handle". Accounts must be Creators or Businesses.
 {% if d.unsupported %}
 
-
-Not available through Instagram's API: {% for u in d.unsupported %}@{{ u }}{% if not loop.last %}, {% endif %}{% endfor %}
+These Personal accounts are not available: {% for u in d.unsupported %}@{{ u }}{% if not loop.last %}, {% endif %}{% endfor %}
 {% endif %}
+
+⁕ Epilog is a free, open-source project using Instagram's official API
+
+© 2026 · v{{ version }} · Made by K.V. — https://karavaldon.com/epilog

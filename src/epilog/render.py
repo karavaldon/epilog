@@ -2,6 +2,7 @@ import base64
 import io
 import logging
 from dataclasses import dataclass, field, replace
+from importlib import metadata
 from datetime import datetime
 from pathlib import Path
 
@@ -13,6 +14,11 @@ from PIL import Image, ImageDraw, ImageFont
 from .graph import Account
 
 log = logging.getLogger(__name__)
+
+try:
+    VERSION = metadata.version("epilog")
+except metadata.PackageNotFoundError:  # running straight from a source folder
+    VERSION = "dev"
 
 POST_WIDTH = 400  # display px; small enough that a 4:5 post fits on screen with its caption
 VIDEO_HEIGHT = 260  # display px, max height for video thumbnails
@@ -187,7 +193,7 @@ def render(digest: Digest, inline_images: bool) -> tuple[str, str, dict[str, byt
                 media[p.id].append(replace(imgs[key], is_video=item.is_video, href=href))
 
     env = template_env()
-    ctx = dict(d=digest, img=imgs, media=media, post_width=POST_WIDTH, gap=CAROUSEL_GAP)
+    ctx = dict(d=digest, img=imgs, media=media, post_width=POST_WIDTH, gap=CAROUSEL_GAP, version=VERSION)
     html = env.get_template("digest.html.j2").render(**ctx)
     text = env.get_template("digest.txt.j2").render(**ctx)
     return html, text, images

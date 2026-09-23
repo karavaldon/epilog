@@ -172,6 +172,8 @@
   .status.ok { color: var(--ok); }
   .status.bad { color: var(--bad); }
   .done-line { display: flex; align-items: center; gap: 12px; font: 600 16px/1.4 var(--sans); }
+  /* on the final screen the tick sits out at the right edge */
+  [data-screen="done"] .done-line { justify-content: space-between; }
   .tick { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; border: 2px solid var(--ink); background: var(--key); color: var(--ink); font-size: 14px; flex: none; }
   .spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; display: inline-block; animation: spin .7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -491,7 +493,7 @@
   <!-- DONE -->
   <section data-screen="done" hidden>
     <div class="card fade">
-      <div class="done-line"><span class="tick">✓</span><h2 style="margin:0">Epilog is set up.</h2></div>
+      <div class="done-line"><h2 style="margin:0">Epilog is set up!</h2><span class="tick">✓</span></div>
       <ol class="how" id="summary" style="margin-top:14px"></ol>
     </div>
     <div class="card fade" id="first-card">

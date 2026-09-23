@@ -58,7 +58,7 @@
         {% endif %}
       </td>
       <td style="vertical-align:middle;font-family:{{ sans }};">
-        <a href="https://www.instagram.com/{{ a.username }}/" style="color:{{ ink }};text-decoration:none;font-size:15px;font-weight:600;line-height:1.2;">{{ a.name }}</a>
+        <div style="color:{{ ink }};font-size:15px;font-weight:600;line-height:1.2;">{{ a.name }}</div>
         <div style="font-family:{{ mono }};font-size:12px;color:{{ muted }};line-height:1.4;">@{{ a.username }} · {{ a.posts|length }} new</div>
       </td>
     </tr></table>
@@ -94,11 +94,12 @@
     {% if d.failed %}
     <div style="padding-bottom:8px;">Couldn't reach {% for u, err in d.failed %}@{{ u }}{% if not loop.last %}, {% endif %}{% endfor %} today (connection problem). Their new posts will be in the next digest.</div>
     {% endif %}
+    <div style="padding-bottom:14px;">To add accounts, reply to this email with their handles, one per line (“add @handle” works too). To stop following one, reply “remove @handle”. Accounts must be Creators or Businesses.</div>
     {% if d.unsupported %}
-    <div style="padding-bottom:8px;">Not available through Instagram's API (personal accounts): {% for u in d.unsupported %}@{{ u }}{% if not loop.last %}, {% endif %}{% endfor %}.</div>
+    <div style="padding-bottom:14px;">These Personal accounts are not available: {% for u in d.unsupported %}@{{ u }}{% if not loop.last %}, {% endif %}{% endfor %}</div>
     {% endif %}
-    <div style="padding-bottom:8px;">To add accounts, reply with their handles, one per line (“add @handle” works too). To stop following one, reply “remove @handle”.</div>
-    <div>Epilog is a free, open-source project using Instagram’s official API. <a href="https://karavaldon.com/epilog" style="color:{{ accent }};text-decoration:underline;">karavaldon.com/epilog</a></div>
+    <div style="padding-bottom:14px;">⁕ Epilog is a free, open-source project using Instagram’s official API</div>
+    <div>© 2026 · v{{ version }} · Made by <a href="https://karavaldon.com/epilog" style="color:{{ accent }};text-decoration:underline;">K.V.</a></div>
   </td></tr>
 
 </table>
