@@ -204,6 +204,10 @@ def cmd_demo(args) -> int:
         ],
         unsupported=["a_friend", "another.friend"],
     )
+    if args.send:
+        deliver(load_config(), digest)
+        print(f"Sent a sample digest to {load_config().digest_to}.")
+        return 0
     html, _, _ = render(digest, inline_images=True)
     PREVIEW_PATH.write_text(html)
     print(f"Wrote {PREVIEW_PATH}")
@@ -258,7 +262,9 @@ def main() -> None:
 
     sub.add_parser("setup-token", help="reconnect Instagram only").set_defaults(func=cmd_setup_token)
     sub.add_parser("test-email", help="send a test email via Gmail").set_defaults(func=cmd_test_email)
-    sub.add_parser("demo", help="preview the email design with sample data").set_defaults(func=cmd_demo)
+    demo = sub.add_parser("demo", help="preview the email design with sample data")
+    demo.add_argument("--send", action="store_true", help="email the sample digest to yourself")
+    demo.set_defaults(func=cmd_demo)
 
     args = parser.parse_args()
     sys.exit(args.func(args))

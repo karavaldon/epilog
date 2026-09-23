@@ -491,7 +491,7 @@
   <!-- DONE -->
   <section data-screen="done" hidden>
     <div class="card fade">
-      <div class="done-line"><span class="tick">✓</span><span>Epilog is set up.</span></div>
+      <div class="done-line"><span class="tick">✓</span><h2 style="margin:0">Epilog is set up.</h2></div>
       <ol class="how" id="summary" style="margin-top:14px"></ol>
     </div>
     <div class="card fade" id="first-card">
@@ -833,7 +833,7 @@ $("to-done").onclick = () => show("done");
 
 // ---------------------------------------------------------------- Done
 // the project's purples: accent, button, highlight, field
-const CONFETTI_COLORS = ["#5760dd", "#b6bbfe", "#e8e9fa", "#dfe1ff"];
+const CONFETTI_COLORS = ["#5760dd", "#b6bbfe", "#9aa0f2", "#c9cdff"];
 let celebrated = false;
 
 function celebrate() {
@@ -847,35 +847,34 @@ function celebrate() {
   const pieces = [];
 
   // Physics follows canvas-confetti: velocity decays while gravity keeps pulling.
-  // Each piece tips onto its edge as it falls, like a scrap of paper.
-  // pieces start spread across the top of the window and flutter down
-  function drop(count, { spread = 150, startVelocity = 34, decay = 0.89, scalar = 1, ticks = 430,
-                         wait = 26, gravity = 0.9 }) {
+  // Each piece sways side to side as it tips onto its edge, like falling paper.
+  // a popper: fires from a point at a given angle, scatters, then drops fast
+  function fire(count, { x, y, angle, spread = 55, startVelocity = 85, decay = 0.91,
+                         scalar = 1, ticks = 230, gravity = 3 }) {
     for (let n = 0; n < count; n++) {
       const el = document.createElement("i");
-      const size = 40 * scalar;
+      const size = 34 * scalar;
       el.style.cssText = `left:0;top:0;width:${size}px;height:${size}px;opacity:0;` +
         `color:${CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)]};`;
       box.append(el);
       pieces.push({
-        el, tick: 0, ticks, wait: Math.floor(rand(0, wait)),
-        x: rand(-40, window.innerWidth + 40), y: rand(-90, 30),
-        // a wide fan — most head outwards and down, a few pop upwards first
-        angle: (90 + rand(-spread / 2, spread / 2)) * Math.PI / 180,
+        el, tick: 0, ticks, wait: Math.floor(rand(0, 6)), x, y,
+        angle: (angle + rand(-spread / 2, spread / 2)) * Math.PI / 180,
         velocity: startVelocity * rand(0.55, 1),
-        decay, gravity: gravity * rand(0.8, 1.2), drift: rand(-0.5, 0.5),
-        // the piece tips over slowly as it falls, showing face then edge
-        flip: rand(0, Math.PI * 2), flipSpeed: rand(0.018, 0.036) * (Math.random() < .5 ? -1 : 1),
-        yaw: rand(0, Math.PI * 2), yawSpeed: rand(0.001, 0.004),
-        tilt: rand(-14, 14),
+        decay, gravity: gravity * rand(0.85, 1.15), drift: rand(-0.3, 0.3),
+        flip: rand(0, Math.PI * 2), flipSpeed: rand(0.06, 0.14) * (Math.random() < .5 ? -1 : 1),
+        yaw: rand(0, Math.PI * 2), yawSpeed: rand(0.02, 0.06),
+        sway: rand(0.3, 0.9), tilt: rand(-20, 20),
       });
     }
   }
 
-  drop(10, { scalar: 1, wait: 8 });                                   // the pop
-  drop(7, { scalar: 0.7, startVelocity: 44, spread: 170, wait: 14 });
-  drop(5, { scalar: 1.4, startVelocity: 22, gravity: 0.7, decay: 0.92, wait: 40 });   // slow floaters
-  drop(4, { scalar: 0.9, startVelocity: 16, gravity: 0.6, wait: 90, ticks: 480 });    // stragglers
+  // two poppers at the bottom corners, fired up and inwards
+  const W = window.innerWidth, H = window.innerHeight;
+  fire(13, { x: W * 0.02, y: H * 0.98, angle: -55 });                      // left → up and right
+  fire(13, { x: W * 0.98, y: H * 0.98, angle: -125 });                     // right → up and left
+  fire(5, { x: W * 0.02, y: H * 0.98, angle: -42, scalar: 0.7, startVelocity: 105, spread: 35 });
+  fire(5, { x: W * 0.98, y: H * 0.98, angle: -138, scalar: 0.7, startVelocity: 105, spread: 35 });
 
   let alive = pieces.length;
   (function frame() {
@@ -885,7 +884,8 @@ function celebrate() {
       p.flip += p.flipSpeed;
       p.yaw += p.yawSpeed;
       // a falling scrap slips sideways fastest when it's tipped over
-      p.x += Math.cos(p.angle) * p.velocity + p.drift;
+      // a falling scrap slips sideways fastest when it's tipped over
+      p.x += Math.cos(p.angle) * p.velocity + p.drift + Math.sin(p.flip) * p.sway;
       p.y += Math.sin(p.angle) * p.velocity + p.gravity * (0.75 + 0.25 * Math.abs(Math.cos(p.flip)));
       p.velocity *= p.decay;
       const progress = p.tick / p.ticks;

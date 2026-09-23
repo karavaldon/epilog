@@ -6,12 +6,16 @@
 <meta name="color-scheme" content="light">
 <title>{{ d.subject }}</title>
 </head>
+<!-- Web fonts load in Apple Mail and similar; Gmail falls back to the system faces. -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <body style="margin:0;padding:0;background:#ffffff;-webkit-text-size-adjust:100%;">
-{% set sans = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" %}
+{% set sans = "'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" %}
+{% set mono = "'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace" %}
 {% set serif = "Georgia,'Times New Roman',serif" %}
-{% set ink = "#111111" %}
-{% set muted = "#6e6e6e" %}
-{% set faint = "#999999" %}
+{% set ink = "#000000" %}
+{% set muted = "#4a4a55" %}
+{% set faint = "#7b7b8a" %}
+{% set accent = "#5760dd" %}
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
   {{ d.preheader }}{% for _ in range(80) %}&#8199;&#847;{% endfor %}
 </div>
@@ -22,7 +26,7 @@
   <!-- Masthead -->
   <tr><td style="padding:0 0 28px;">
     <div style="font-family:{{ serif }};font-size:56px;line-height:1;color:{{ ink }};" aria-label="Epilog">⁕</div>
-    <div style="font-family:{{ sans }};font-size:13px;line-height:1.5;color:{{ muted }};padding-top:6px;">
+    <div style="font-family:{{ mono }};font-size:12px;line-height:1.5;color:{{ muted }};text-transform:uppercase;letter-spacing:0.06em;padding-top:10px;">
       {{ d.generated_at.strftime("%A, %B %-d") }}
       {% if d.post_count %} · {{ d.post_count }} new post{{ "s" if d.post_count != 1 }} from {{ d.accounts|length }} account{{ "s" if d.accounts|length != 1 }}{% endif %}
     </div>
@@ -30,7 +34,7 @@
 
   {% for n in d.notices %}
   <tr><td style="padding:0 0 20px;">
-    <div style="font-family:{{ sans }};font-size:14px;line-height:1.5;color:{{ ink }};background:#f2f2f2;padding:12px 14px;">{{ n }}</div>
+    <div style="font-family:{{ sans }};font-size:14px;line-height:1.5;color:{{ ink }};background:#f2f2f2;border:2px solid {{ ink }};padding:12px 14px;">{{ n }}</div>
   </td></tr>
   {% endfor %}
 
@@ -41,7 +45,7 @@
   {% for a in d.accounts %}
   <!-- @{{ a.username }} -->
   {% if not loop.first %}
-  <tr><td style="padding:4px 0 28px;"><div style="height:1px;line-height:1px;font-size:0;background:#e6e6e6;">&nbsp;</div></td></tr>
+  <tr><td style="padding:4px 0 28px;"><div style="height:2px;line-height:2px;font-size:0;background:#e0e0e0;">&nbsp;</div></td></tr>
   {% endif %}
   <tr><td style="padding:0 0 12px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
@@ -50,12 +54,12 @@
         {% if av %}
         <img src="{{ av.src }}" width="36" height="36" alt="" style="display:block;width:36px;height:36px;border-radius:18px;">
         {% else %}
-        <div style="width:36px;height:36px;border-radius:18px;background:#e0e0e0;"></div>
+        <div style="width:36px;height:36px;border-radius:18px;background:#ebebeb;"></div>
         {% endif %}
       </td>
       <td style="vertical-align:middle;font-family:{{ sans }};">
         <a href="https://www.instagram.com/{{ a.username }}/" style="color:{{ ink }};text-decoration:none;font-size:15px;font-weight:600;line-height:1.2;">{{ a.name }}</a>
-        <div style="font-size:12px;color:{{ faint }};line-height:1.3;">@{{ a.username }} · {{ a.posts|length }} new</div>
+        <div style="font-family:{{ mono }};font-size:12px;color:{{ muted }};line-height:1.4;">@{{ a.username }} · {{ a.posts|length }} new</div>
       </td>
     </tr></table>
   </td></tr>
@@ -74,7 +78,7 @@
     {% endif %}
     {% endfor %}
     <div style="font-family:{{ sans }};padding-top:{{ '10px' if items else '0' }};">
-      <a href="{{ p.permalink }}" style="font-size:11px;line-height:1.4;color:{{ faint }};text-transform:uppercase;letter-spacing:0.6px;text-decoration:none;">
+      <a href="{{ p.permalink }}" style="font-family:{{ mono }};font-size:11px;line-height:1.4;color:{{ faint }};text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;">
         {{ p.timestamp|when }}{% if p.kind == "video" %} · Video{% elif p.kind == "carousel" %} · {{ p.count }} photos{% endif %}
       </a>
       {% if p.caption %}
@@ -86,7 +90,7 @@
   {% endfor %}
 
   <!-- Footer -->
-  <tr><td style="padding:24px 0 0;font-family:{{ sans }};font-size:12px;line-height:1.6;color:{{ faint }};border-top:1px solid #e6e6e6;">
+  <tr><td style="padding:24px 0 0;font-family:{{ mono }};font-size:12px;line-height:1.7;color:{{ faint }};border-top:2px solid #e0e0e0;">
     {% if d.failed %}
     <div style="padding-bottom:8px;">Couldn't reach {% for u, err in d.failed %}@{{ u }}{% if not loop.last %}, {% endif %}{% endfor %} today (connection problem). Their new posts will be in the next digest.</div>
     {% endif %}
@@ -94,7 +98,7 @@
     <div style="padding-bottom:8px;">Not available through Instagram's API (personal accounts): {% for u in d.unsupported %}@{{ u }}{% if not loop.last %}, {% endif %}{% endfor %}.</div>
     {% endif %}
     <div style="padding-bottom:8px;">To add accounts, reply with their handles, one per line (“add @handle” works too). To stop following one, reply “remove @handle”.</div>
-    <div>Epilog is a free, open-source project using Instagram’s official API. <a href="https://karavaldon.com/epilog" style="color:{{ muted }};text-decoration:underline;">karavaldon.com/epilog</a></div>
+    <div>Epilog is a free, open-source project using Instagram’s official API. <a href="https://karavaldon.com/epilog" style="color:{{ accent }};text-decoration:underline;">karavaldon.com/epilog</a></div>
   </td></tr>
 
 </table>
