@@ -120,7 +120,7 @@
   .card h2 { font: 600 22px/1.3 var(--sans); margin: 0 0 14px; }
   .card p { font: 15px/1.6 var(--sans); margin: 0 0 14px; }
   .card p:last-child { margin-bottom: 0; }
-  .muted { color: var(--muted); }
+  .muted { color: var(--ink); }   /* body copy is all one black */
   .small { font-size: 13px; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 18px; }
   ol.how { font: 15px/1.6 var(--sans); margin: 4px 0 14px; padding-left: 22px; }
@@ -159,9 +159,13 @@
   }
   .field::placeholder, textarea::placeholder { color: var(--faint); }
   textarea { min-height: 150px; resize: vertical; line-height: 1.7; }
-  .field.time { width: 8ch; font-size: 22px; padding: 10px 14px; text-align: center; }
+  /* width includes the padding, so leave room for "12:00 pm" plus both sides */
+  .field.time { width: calc(9ch + 34px); font-size: 22px; padding: 10px 14px; text-align: center; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
   .chip { font: 500 13px/1.4 var(--mono); background: #e8e9fa; border-radius: 0; padding: 2px 5px; }
+
+  .copied { font: 500 13px/1.4 var(--mono); color: var(--accent); animation: fade .18s ease-out; }
+  .copied.bad { color: var(--bad); }
 
   /* status */
   .status { font: 14px/1.55 var(--sans); margin-top: 14px; white-space: pre-line; }
@@ -245,6 +249,19 @@
   .foot b { color: var(--muted); font-weight: 600; }
   .foot a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
 
+  /* asterisk confetti on the last screen */
+  .confetti {
+    position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 20;
+    perspective: 700px;   /* so pieces can tip onto their edge as they fall */
+  }
+  .confetti i {
+    position: absolute; display: block; will-change: transform;
+    background-color: currentColor;
+    -webkit-mask: url("/assets/asterisk.svg") center / contain no-repeat;
+    mask: url("/assets/asterisk.svg") center / contain no-repeat;
+  }
+  @media (prefers-reduced-motion: reduce) { .confetti { display: none; } }
+
   [hidden] { display: none !important; }
   .fade { animation: fade .18s ease-out; }
   @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
@@ -276,14 +293,14 @@
   <section data-screen="intro" hidden>
     <div class="card fade">
       <div class="meta"><span>Setup takes 10–20 min</span></div>
-      <h2>A daily email with the Instagram feed you care about.</h2>
-      <p>Epilog reads Instagram through its official API and emails you from your own Gmail. Everything stays on this computer.</p>
+      <h2>Get a daily email with the Instagram feed you care about.</h2>
+      <p>Epilog reads Instagram posts through its official API and emails your feed to you. It will run on this computer only.</p>
     </div>
     <div class="card fade">
       <div class="meta"><span>What you'll need</span></div>
       <ol class="how">
         <li>Your Instagram account, switched to <b>Creator or Business</b></li>
-        <li>A Facebook account, to create a Page and a free Meta developer app</li>
+        <li>A Facebook account, to create a Page and a free Meta developer app (step-by-step instructions are next)</li>
         <li>Gmail with 2-Step Verification</li>
       </ol>
       <p class="muted">Setup remembers your progress. You can close this page and pick up where you left off.</p>
@@ -347,8 +364,9 @@
     <div id="ig-form">
       <div class="card fade">
         <div class="meta"><span>Your app's ID and secret</span></div>
-        <p>Open the Meta app you made in the last step and go to its basic settings. The App Secret is hidden until you click <span class="hl">Show</span> next to it.</p>
+        <p>Open the Meta app you made in the last step and go to its basic settings.</p>
         <p class="trail"><b>In the left sidebar:</b><span>App settings</span><span>Basic</span></p>
+        <p>The App Secret is hidden until you click <span class="hl">Show</span> next to it.</p>
         <div class="row" style="margin-top:0;margin-bottom:4px"><a class="pill small" href="https://developers.facebook.com/apps" target="_blank" rel="noopener">Open my apps ↗</a></div>
         <label class="lbl" for="app-id">App ID</label>
         <input class="field" id="app-id" inputmode="numeric" autocomplete="off" placeholder="e.g. 1234567890123456">
@@ -361,14 +379,17 @@
 
       <div class="card fade">
         <div class="meta"><span>Access token</span></div>
-        <p><b>Open Graph API Explorer first</b> — it's Meta's tool for creating a token. Then follow the steps below in that tab.</p>
+        <p><b>Open Graph API Explorer</b> — it's Meta's tool for creating a token. Then follow the steps below in that tab.</p>
         <div class="row" style="margin-top:0"><a class="pill small" href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener">Open Graph API Explorer ↗</a></div>
         <ol class="how">
           <li>Pick your app in the <span class="hl">Meta App</span> menu, top right</li>
           <li>Under <span class="hl">User or Page</span>, choose <span class="hl">Get User Access Token</span></li>
           <li>Add these permissions:
             <div class="chips" id="perm-chips"></div>
-            <div class="row" style="margin-top:0"><button class="pill small" type="button" id="copy-perms">Copy permission names</button></div>
+            <div class="row" style="margin-top:0">
+              <button class="pill small" type="button" id="copy-perms">Copy permission names</button>
+              <span class="copied" id="copy-note" hidden>Copied ✓</span>
+            </div>
           </li>
           <li>Click <span class="hl">Generate Access Token</span>, and pick the Page linked to your Instagram when asked</li>
           <li>Copy the token and paste it below</li>
@@ -401,16 +422,16 @@
 
     <div id="gm-form">
       <div class="card fade">
-        <div class="meta"><span>Why Gmail?</span></div>
+        <div class="meta"><span>Gmail setup</span></div>
         <p>Epilog emails you from your own Gmail to yourself, and reads your replies so you can add accounts by email. It uses an <b>app password</b>: a separate password just for Epilog that you can revoke anytime.</p>
       </div>
       <div class="card fade">
-        <div class="meta"><span>1 · Turn on 2-Step Verification</span><span>skip if it's on</span></div>
+        <div class="meta"><span>Turn on 2-Step Verification</span><span>skip if it's on</span></div>
         <p class="muted">Google only offers app passwords when 2-Step Verification is on.</p>
         <div class="row" style="margin-top:0"><a class="pill small" href="https://myaccount.google.com/signinoptions/twosv" target="_blank" rel="noopener">2-Step Verification ↗</a></div>
       </div>
       <div class="card fade">
-        <div class="meta"><span>2 · Create an app password</span></div>
+        <div class="meta"><span>Create an app password</span></div>
         <p>Name it <b>Epilog</b> and copy the 16-letter code. Make sure you're signed in to the Google account you want to use.</p>
         <div class="row" style="margin-top:0"><a class="pill small" href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">App passwords ↗</a></div>
         <label class="lbl" for="gm-address">Gmail address</label>
@@ -430,8 +451,8 @@
   <section data-screen="time" hidden>
     <div class="card fade">
       <div class="meta"><span>Every day</span></div>
-      <h2>When should your digest arrive?</h2>
-      <p class="muted small" id="time-note">Your computer needs to be awake at that time. If it's asleep, the digest arrives when it wakes.</p>
+      <h2>When should your email arrive?</h2>
+      <p class="muted small" id="time-note">Epilog runs on this computer, not on a server somewhere, so it needs to be awake at that time. If it's asleep, the email arrives when you next wake it.</p>
       <input class="field time" id="time" type="text" inputmode="text" autocomplete="off"
              value="7:00 am" aria-label="Delivery time" placeholder="7:00 am">
       <div class="row"><button class="pill primary" id="time-save">Schedule it →</button></div>
@@ -449,7 +470,7 @@
 
     <div class="card fade">
       <div class="meta"><span>Add accounts</span><span>one per line</span></div>
-      <p class="muted small">Handles, @handles or profile links all work. Only <b>Business and Creator</b> accounts can be read (most brands, shops, artists and publications). Personal accounts will be flagged.</p>
+      <p class="muted small">Handles, @handles, or profile links all work. Only <b>Business and Creator</b> accounts can be read (most brands, shops, artists and publications). Personal accounts that can't be read will be noted in the footer.</p>
       <textarea id="handles" placeholder="@yourfavoritebakery&#10;a.local.gallery&#10;instagram.com/that.record.shop"></textarea>
       <div class="row"><button class="pill primary" id="check">Check accounts</button></div>
       <div class="status" id="check-status" role="status"></div>
@@ -645,6 +666,13 @@ function nextScreen() {
   return "done";
 }
 
+// After finishing a step, go forward to the next unfinished one — never back.
+function nextAfter(screen) {
+  const from = SCREEN_ORDER.indexOf(screen);
+  for (const key of SCREEN_ORDER.slice(from + 1)) if (key === "done" || !done(key)) return key;
+  return "done";
+}
+
 // ---------------------------------------------------------------- Instagram
 function renderInstagram(forceForm = false) {
   const ig = S.instagram;
@@ -663,12 +691,13 @@ function renderInstagram(forceForm = false) {
 }
 
 $("perm-chips").append(...PERMS.map(p => Object.assign(document.createElement("span"), { className: "chip", textContent: p })));
-$("copy-perms").onclick = async (e) => {
-  const btn = e.currentTarget;
-  btn.style.minWidth = btn.offsetWidth + "px";   // keep the row from reflowing on the label swap
-  try { await navigator.clipboard.writeText(PERMS.join(", ")); btn.textContent = "Copied ✓"; }
-  catch { btn.textContent = "Copy failed"; }
-  setTimeout(() => btn.textContent = "Copy permission names", 1800);
+$("copy-perms").onclick = async () => {
+  const note = $("copy-note");
+  try { await navigator.clipboard.writeText(PERMS.join(", ")); note.textContent = "Copied ✓"; note.className = "copied"; }
+  catch { note.textContent = "Couldn't copy — select them above"; note.className = "copied bad"; }
+  note.hidden = false;
+  clearTimeout(note.dataset.timer);
+  note.dataset.timer = setTimeout(() => note.hidden = true, 2200);
 };
 $("ig-reconnect").onclick = () => renderInstagram(true);
 $("ig-connect").onclick = (e) => busy(e.target, async () => {
@@ -693,7 +722,7 @@ $("ig-connect").onclick = (e) => busy(e.target, async () => {
   status("ig-status", `✓ Connected as @${r.username}.` + (r.missingScopes.length ? `\nNote: the token is missing ${r.missingScopes.join(", ")}.` : ""), "ok");
   $("ig-token").value = ""; $("app-secret").value = "";
   S = await api("/api/state");
-  setTimeout(() => show(nextScreen()), 900);
+  setTimeout(() => show(nextAfter("instagram")), 900);
 });
 
 // ---------------------------------------------------------------- Gmail
@@ -712,7 +741,7 @@ $("gm-save").onclick = (e) => busy(e.target, async () => {
   status("gm-status", `✓ Gmail works. Digests will come from and go to ${r.address}.`, "ok");
   $("gm-password").value = "";
   S = await api("/api/state");
-  setTimeout(() => show(nextScreen()), 900);
+  setTimeout(() => show(nextAfter("gmail")), 900);
 });
 
 // ---------------------------------------------------------------- Time
@@ -725,9 +754,9 @@ $("time-save").onclick = (e) => busy(e.target, async () => {
   status("time-status", "Scheduling…", "busy");
   const r = await api("/api/schedule", { time: $("time").value });
   if (r.error) return status("time-status", r.error, "bad");
-  status("time-status", r.note || `✓ Your digest will arrive daily at ${r.label}. Replies are checked every 15 minutes.`, "ok");
+  status("time-status", r.note || `✓ Your email will arrive daily at ${r.label}. Replies are checked every 15 minutes.`, "ok");
   S = await api("/api/state");
-  setTimeout(() => show(nextScreen()), 900);
+  setTimeout(() => show(nextAfter("time")), 900);
 });
 
 // ---------------------------------------------------------------- Accounts
@@ -803,7 +832,76 @@ $("welcome").onclick = (e) => busy(e.target, async () => {
 $("to-done").onclick = () => show("done");
 
 // ---------------------------------------------------------------- Done
+// the project's purples: accent, button, highlight, field
+const CONFETTI_COLORS = ["#5760dd", "#b6bbfe", "#e8e9fa", "#dfe1ff"];
+let celebrated = false;
+
+function celebrate() {
+  if (celebrated || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  celebrated = true;
+  const box = document.createElement("div");
+  box.className = "confetti";
+  document.body.append(box);
+
+  const rand = (lo, hi) => lo + Math.random() * (hi - lo);
+  const pieces = [];
+
+  // Physics follows canvas-confetti: velocity decays while gravity keeps pulling.
+  // Each piece tips onto its edge as it falls, like a scrap of paper.
+  // pieces start spread across the top of the window and flutter down
+  function drop(count, { spread = 150, startVelocity = 34, decay = 0.89, scalar = 1, ticks = 430,
+                         wait = 26, gravity = 0.9 }) {
+    for (let n = 0; n < count; n++) {
+      const el = document.createElement("i");
+      const size = 40 * scalar;
+      el.style.cssText = `left:0;top:0;width:${size}px;height:${size}px;opacity:0;` +
+        `color:${CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)]};`;
+      box.append(el);
+      pieces.push({
+        el, tick: 0, ticks, wait: Math.floor(rand(0, wait)),
+        x: rand(-40, window.innerWidth + 40), y: rand(-90, 30),
+        // a wide fan — most head outwards and down, a few pop upwards first
+        angle: (90 + rand(-spread / 2, spread / 2)) * Math.PI / 180,
+        velocity: startVelocity * rand(0.55, 1),
+        decay, gravity: gravity * rand(0.8, 1.2), drift: rand(-0.5, 0.5),
+        // the piece tips over slowly as it falls, showing face then edge
+        flip: rand(0, Math.PI * 2), flipSpeed: rand(0.018, 0.036) * (Math.random() < .5 ? -1 : 1),
+        yaw: rand(0, Math.PI * 2), yawSpeed: rand(0.001, 0.004),
+        tilt: rand(-14, 14),
+      });
+    }
+  }
+
+  drop(10, { scalar: 1, wait: 8 });                                   // the pop
+  drop(7, { scalar: 0.7, startVelocity: 44, spread: 170, wait: 14 });
+  drop(5, { scalar: 1.4, startVelocity: 22, gravity: 0.7, decay: 0.92, wait: 40 });   // slow floaters
+  drop(4, { scalar: 0.9, startVelocity: 16, gravity: 0.6, wait: 90, ticks: 480 });    // stragglers
+
+  let alive = pieces.length;
+  (function frame() {
+    for (const p of pieces) {
+      if (p.tick > p.ticks) continue;
+      if (p.wait > 0) { p.wait--; continue; }     // staggered start, so they don't drop in unison
+      p.flip += p.flipSpeed;
+      p.yaw += p.yawSpeed;
+      // a falling scrap slips sideways fastest when it's tipped over
+      p.x += Math.cos(p.angle) * p.velocity + p.drift;
+      p.y += Math.sin(p.angle) * p.velocity + p.gravity * (0.75 + 0.25 * Math.abs(Math.cos(p.flip)));
+      p.velocity *= p.decay;
+      const progress = p.tick / p.ticks;
+      p.el.style.opacity = progress > 0.8 ? (1 - progress) / 0.2 : 1;   // hold, then fade out
+      p.el.style.transform =
+        `translate3d(${p.x}px, ${p.y}px, 0) ` +
+        `rotateX(${p.flip}rad) rotateY(${p.yaw}rad) rotate(${p.tilt}deg)`;
+      if (++p.tick > p.ticks) { p.el.remove(); alive--; }
+    }
+    if (alive > 0) requestAnimationFrame(frame);
+    else box.remove();
+  })();
+}
+
 function renderDone() {
+  celebrate();
   const items = [
     `Instagram: @${S.instagram.username}` + (S.instagram.renewBy ? ` (renew by ${S.instagram.renewBy})` : ""),
     `Gmail: ${S.gmail.address}`,
