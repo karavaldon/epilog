@@ -1,6 +1,6 @@
 # ⁕ Epilog
 
-**A daily email of new posts from the Instagram accounts you choose, so you can keep up without opening the app.**
+**A daily email with the Instagram feed you care about — so you can keep up without opening the app.**
 
 Every morning, Epilog sends you one calm email with what your chosen accounts posted: the photos, full captions, every image in multi-photo posts, and a link to watch videos in the app. It runs on your own computer, uses Instagram's official API, and sends from your own Gmail. Nothing else is involved.
 

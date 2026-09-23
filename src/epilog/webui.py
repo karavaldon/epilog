@@ -6,6 +6,7 @@ our own address, so other websites open in the browser can't talk to it."""
 
 import json
 import logging
+from importlib import metadata
 import secrets
 import socket
 import threading
@@ -29,6 +30,10 @@ log = logging.getLogger(__name__)
 
 PAGE = Path(__file__).parent / "templates" / "setup.html"
 ASSETS = Path(__file__).parent / "assets"
+try:
+    VERSION = metadata.version("epilog")
+except metadata.PackageNotFoundError:  # running straight from a source folder
+    VERSION = "dev"
 IDLE_TIMEOUT = timedelta(minutes=45)
 FIRST_DIGEST_WINDOW = timedelta(days=7)
 MAX_HANDLES = 60
@@ -123,6 +128,7 @@ def state() -> dict:
     expires = cfg.token_expires_at
     jobs = schedule.status()
     return {
+        "version": VERSION,
         "dataDir": str(DATA_DIR),
         "instagram": {
             "connected": ig_issue is None,
@@ -290,6 +296,7 @@ def demo_state() -> dict:
     renew = (datetime.now() + timedelta(days=60)).strftime("%b %-d, %Y")
     return {
         "demo": True,
+        "version": VERSION,
         "dataDir": "(demo — nothing is saved)",
         "instagram": {"connected": bool(DEMO["username"]), "issue": None, "username": DEMO["username"],
                       "renewBy": renew if DEMO["username"] else None, "expiringSoon": False,

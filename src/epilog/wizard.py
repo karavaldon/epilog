@@ -241,7 +241,7 @@ def step_accounts() -> bool:
 
 def run() -> int:
     say(f"\n{BOLD}⁕ Epilog setup{RESET}")
-    say("Epilog emails you a daily digest of new posts from Instagram accounts you choose.")
+    say("A daily email with the Instagram feed you care about.")
     say(f"{DIM}Your settings are saved in {DATA_DIR}. You can stop anytime (Ctrl-C) and run setup again —\n"
         f"finished steps are remembered.{RESET}")
     try:

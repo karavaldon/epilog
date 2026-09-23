@@ -1,7 +1,7 @@
 [project]
 name = "epilog"
 version = "1.0.0"
-description = "A daily email of new posts from the Instagram accounts you choose, using Instagram's official API"
+description = "A daily email with the Instagram feed you care about, using Instagram's official API"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]

@@ -231,7 +231,7 @@ def _duration(value: str) -> timedelta:
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
                         datefmt="%Y-%m-%d %H:%M:%S")
-    parser = argparse.ArgumentParser(prog="epilog", description="A daily email digest of new Instagram posts.")
+    parser = argparse.ArgumentParser(prog="epilog", description="A daily email with the Instagram feed you care about.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     setup = sub.add_parser("setup", help="guided setup in your browser (also renews Instagram or changes the time)")
