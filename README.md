@@ -87,6 +87,7 @@ One handle per line, with or without the @. Profile links work too, and so does 
 | `uv run epilog check` | Shows which of your accounts Instagram's API can read |
 | `uv run epilog run --dry-run` | Builds today's digest as a web page, without sending it |
 | `uv run epilog demo` | Previews the email design with sample posts |
+| `uv run epilog run --rebuild` | Re-sends the last digest from cache, without asking Instagram again |
 | `uv run epilog schedule uninstall` | Stops the daily email |
 
 ## Privacy

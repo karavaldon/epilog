@@ -25,7 +25,12 @@ VIDEO_HEIGHT = 260  # display px, max height for video thumbnails
 CAROUSEL_GAP = 4  # px between stacked carousel images
 AVATAR_SIZE = 36
 RETINA = 2  # images are stored at 2x their display size
-MAX_IMAGES = 120  # keeps the email well under Gmail's 25 MB limit
+JPEG_QUALITY = 78
+# Phone mail apps labour over very large messages, so a digest fills up to this
+# much and then continues in a second email rather than growing without limit.
+# (Base64 adds about a third on top, so ~5 MB of photos ≈ a 7 MB email.)
+IMAGE_BUDGET_BYTES = 5 * 1024 * 1024
+MAX_IMAGES = 80  # per email
 
 
 @dataclass
@@ -35,6 +40,8 @@ class Digest:
     failed: list[tuple[str, str]] = field(default_factory=list)
     notices: list[str] = field(default_factory=list)
     generated_at: datetime = field(default_factory=lambda: datetime.now().astimezone())
+    part: int = 1        # a heavy day is split across several emails
+    parts: int = 1
 
     @property
     def post_count(self) -> int:
@@ -42,14 +49,16 @@ class Digest:
 
     @property
     def subject(self) -> str:
-        return f"⁕ {self.generated_at:%A, %b %-d}"
+        day = f"⁕ {self.generated_at:%A, %b %-d}"
+        return day if self.parts == 1 else f"{day} ({self.part} of {self.parts})"
 
     @property
     def preheader(self) -> str:
         """The gray preview line inboxes show under the subject."""
         if not self.post_count:
             return self.notices[0] if self.notices else "No new posts today"
-        return f"{_plural(self.post_count, 'post')} from {_plural(len(self.accounts), 'account')}"
+        counts = f"{_plural(self.post_count, 'post')} from {_plural(len(self.accounts), 'account')}"
+        return counts if self.parts == 1 else f"Part {self.part} of {self.parts} · {counts}"
 
 
 def _plural(n: int, word: str) -> str:
@@ -127,7 +136,7 @@ def _add_play_icon(img: Image.Image) -> Image.Image:
 
 def _jpeg(img: Image.Image) -> bytes:
     out = io.BytesIO()
-    img.save(out, "JPEG", quality=82, optimize=True, progressive=True)
+    img.save(out, "JPEG", quality=JPEG_QUALITY, optimize=True, progressive=True)
     return out.getvalue()
 
 
@@ -151,16 +160,18 @@ def template_env() -> Environment:
     return env
 
 
-def render(digest: Digest, inline_images: bool) -> tuple[str, str, dict[str, bytes]]:
-    """Returns (html, text, images). With inline_images=True the images are
-    data: URIs (for the browser preview); otherwise cid: references to attach."""
+def _collect(digest: Digest, inline_images: bool, budget_bytes: int | None):
+    """Fetches the photos for as much of the digest as fits in `budget_bytes`.
+
+    Returns the assets, the digest trimmed to what fits, and whatever is left
+    over (to become the next email). `budget_bytes=None` means no limit."""
     images: dict[str, bytes] = {}
     imgs: dict[str, Img] = {}
+    spent = 0
 
-    def add(key: str, img: Image.Image | None) -> None:
-        if img is None:
-            return
-        data = _jpeg(img)
+    def add(key: str, img: Image.Image, data: bytes | None = None) -> int:
+        nonlocal spent
+        data = data or _jpeg(img)
         if inline_images:
             src = "data:image/jpeg;base64," + base64.b64encode(data).decode()
         else:
@@ -168,32 +179,114 @@ def render(digest: Digest, inline_images: bool) -> tuple[str, str, dict[str, byt
             images[cid] = data
             src = f"cid:{cid}"
         imgs[key] = Img(src, round(img.width / RETINA), round(img.height / RETINA))
+        spent += len(data)
+        return len(data)
 
-    budget = MAX_IMAGES
+    def post_images(p) -> list[tuple[str, Image.Image, bytes, bool]]:
+        """Loads and resizes every photo of a post, encoded once so its weight is known.
+        Photos already prepared for an earlier render come straight from the cache."""
+        from . import cache
+
+        out = []
+        for i, item in enumerate(p.items):
+            key = f"post-{p.id}-{i}"
+            if data := cache.image(key):
+                out.append((key, Image.open(io.BytesIO(data)), data, item.is_video))
+                continue
+            if not (im := _load(item.url)):
+                continue
+            if item.is_video:
+                im.thumbnail((POST_WIDTH * RETINA, VIDEO_HEIGHT * RETINA), Image.LANCZOS)
+                im = _add_play_icon(im)
+            else:
+                im.thumbnail((POST_WIDTH * RETINA, POST_WIDTH * RETINA * 5 // 4), Image.LANCZOS)
+            data = _jpeg(im)
+            cache.store_image(key, data)
+            out.append((key, im, data, item.is_video))
+        return out
+
     media: dict[str, list[Img]] = {}  # post id → one image per carousel item
+    kept: list[Account] = []
+    leftover: list[Account] = []
+    count = 0
+    full = False
+
     for a in digest.accounts:
-        if avatar := _load(a.avatar_url):
+        if full:                                   # everything from here is the next email
+            leftover.append(a)
+            continue
+        from . import cache
+        key = f"avatar-{a.username}"
+        if data := cache.image(key):
+            add(key, Image.open(io.BytesIO(data)), data)
+        elif avatar := _load(a.avatar_url):
             avatar = _square(avatar)
             avatar.thumbnail((AVATAR_SIZE * RETINA,) * 2, Image.LANCZOS)
-            add(f"avatar-{a.username}", avatar)
-        for p in a.posts:
-            media[p.id] = []
-            for i, item in enumerate(p.items):
-                if budget <= 0 or not (im := _load(item.url)):
-                    continue
-                budget -= 1
-                if item.is_video:
-                    im.thumbnail((POST_WIDTH * RETINA, VIDEO_HEIGHT * RETINA), Image.LANCZOS)
-                    im = _add_play_icon(im)
-                else:
-                    im.thumbnail((POST_WIDTH * RETINA, POST_WIDTH * RETINA * 5 // 4), Image.LANCZOS)
-                key = f"post-{p.id}-{i}"
-                add(key, im)
-                href = f"{p.permalink}?img_index={i + 1}" if p.kind == "carousel" else p.permalink
-                media[p.id].append(replace(imgs[key], is_video=item.is_video, href=href))
+            cache.store_image(key, _jpeg(avatar))
+            add(key, avatar)
 
+        here, spill = [], []
+        for p in a.posts:
+            if full:
+                spill.append(p)
+                continue
+            loaded = post_images(p)
+            weight = sum(len(data) for _, _, data, _ in loaded)
+            # keep whole posts together: start a new email rather than split one
+            # (count > 0 so a single huge post still goes out rather than looping)
+            if count and budget_bytes and (spent + weight > budget_bytes or count + len(loaded) > MAX_IMAGES):
+                full = True
+                spill.append(p)
+                continue
+            media[p.id] = []
+            for key, im, data, is_video in loaded:
+                add(key, im, data)
+                count += 1
+                i = int(key.rsplit("-", 1)[1])
+                href = f"{p.permalink}?img_index={i + 1}" if p.kind == "carousel" else p.permalink
+                media[p.id].append(replace(imgs[key], is_video=is_video, href=href))
+            here.append(p)
+
+        if here:
+            kept.append(replace(a, posts=here))
+        if spill:
+            leftover.append(replace(a, posts=spill))
+
+    rest = None
+    if leftover:
+        # the unsupported/failed notes ride along with the final part only
+        rest = replace(digest, accounts=leftover)
+        digest = replace(digest, accounts=kept, unsupported=[], failed=[])
+    return imgs, media, images, digest, rest
+
+
+def _render_html(digest: Digest, imgs: dict[str, Img], media: dict[str, list[Img]]) -> tuple[str, str]:
     env = template_env()
     ctx = dict(d=digest, img=imgs, media=media, post_width=POST_WIDTH, gap=CAROUSEL_GAP, version=VERSION)
-    html = env.get_template("digest.html.j2").render(**ctx)
-    text = env.get_template("digest.txt.j2").render(**ctx)
+    return (env.get_template("digest.html.j2").render(**ctx),
+            env.get_template("digest.txt.j2").render(**ctx))
+
+
+def render(digest: Digest, inline_images: bool) -> tuple[str, str, dict[str, bytes]]:
+    """One unlimited render — used for the browser preview."""
+    imgs, media, images, digest, _ = _collect(digest, inline_images, budget_bytes=None)
+    html, text = _render_html(digest, imgs, media)
     return html, text, images
+
+
+def render_parts(digest: Digest, budget_bytes: int = IMAGE_BUDGET_BYTES
+                 ) -> list[tuple[Digest, str, str, dict[str, bytes]]]:
+    """Splits a heavy digest across several emails, each within the budget.
+    Part numbering is filled in once the total is known."""
+    collected = []
+    remaining = digest
+    while remaining is not None:
+        imgs, media, images, part, remaining = _collect(remaining, False, budget_bytes)
+        collected.append((part, imgs, media, images))
+
+    out = []
+    for i, (part, imgs, media, images) in enumerate(collected, start=1):
+        part = replace(part, part=i, parts=len(collected))
+        html, text = _render_html(part, imgs, media)
+        out.append((part, html, text, images))
+    return out

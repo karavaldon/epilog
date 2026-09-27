@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
-from . import schedule, wizard
+from . import cache, schedule, wizard
 from .config import DATA_DIR, LOG_DIR, PREVIEW_PATH, Config, load_config, read_accounts
 from .digest import collect, deliver, keep_random_posts, save_seen, send_auth_alert
 from .graph import Account, AuthError, Graph, GraphError, Media, NotSupported, Post
@@ -25,20 +25,30 @@ log = logging.getLogger("epilog")
 def cmd_run(args) -> int:
     cfg = _require_config()
     state = State()
-    if not args.dry_run:
-        _process_replies(cfg, state)  # pick up accounts added by email before building the digest
-    accounts = read_accounts()
-    if not accounts:
-        log.info("No accounts yet — reply to the welcome email (or any digest) with handles to add some.")
-        return 0
+    newest: dict = {}
 
-    try:
-        digest, newest = collect(cfg, accounts, state, since=args.since)
-    except AuthError as e:
-        log.error("Instagram rejected Epilog's connection: %s", e)
+    if args.rebuild:
+        # re-render the last digest from the cache: no Instagram calls, no state change
+        digest = cache.load()
+        if digest is None:
+            sys.exit("Nothing cached yet — run a normal digest first.")
+        log.info("Rebuilding the digest of %s (%d posts, cached)",
+                 digest.generated_at.strftime("%b %-d"), digest.post_count)
+    else:
         if not args.dry_run:
-            send_auth_alert(cfg, e)
-        return 1
+            _process_replies(cfg, state)  # accounts added by email count for today's digest
+        accounts = read_accounts()
+        if not accounts:
+            log.info("No accounts yet — reply to the welcome email (or any digest) with handles to add some.")
+            return 0
+        try:
+            digest, newest = collect(cfg, accounts, state, since=args.since)
+        except AuthError as e:
+            log.error("Instagram rejected Epilog's connection: %s", e)
+            if not args.dry_run:
+                send_auth_alert(cfg, e)
+            return 1
+        cache.save(digest)
 
     if args.sample:
         keep_random_posts(digest, args.sample)
@@ -55,7 +65,8 @@ def cmd_run(args) -> int:
         deliver(cfg, digest)
     else:
         log.info("Nothing new; no email sent")
-    save_seen(state, newest)
+    if not args.rebuild:
+        save_seen(state, newest)
     return 0
 
 
@@ -250,6 +261,8 @@ def main() -> None:
     run.add_argument("--since", type=_duration, help="ignore saved state; include posts from e.g. 48h or 3d")
     run.add_argument("--sample", type=int, metavar="N",
                      help="send N random posts (use with --since); doesn't change what counts as seen")
+    run.add_argument("--rebuild", action="store_true",
+                     help="re-render the last digest from the cache — no Instagram calls, state unchanged")
     run.set_defaults(func=cmd_run)
 
     sub.add_parser("inbox", help="process email replies that add/remove accounts").set_defaults(func=cmd_inbox)

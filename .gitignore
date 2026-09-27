@@ -2,6 +2,7 @@
 .env
 accounts.txt
 state.json
+cache/
 preview.html
 logs/
 

@@ -9,7 +9,7 @@ import requests
 
 from .config import Config
 from .graph import AuthError, Graph, GraphError, NotSupported
-from .render import Digest, render
+from .render import Digest, render, render_parts
 from .send import send_email
 from .state import State
 
@@ -72,9 +72,12 @@ def keep_random_posts(digest: Digest, n: int) -> None:
 
 
 def deliver(cfg: Config, digest: Digest) -> None:
-    html, text, images = render(digest, inline_images=False)
-    send_email(cfg, digest.subject, text, html, images)
-    log.info("Sent “%s” to %s", digest.subject, cfg.digest_to)
+    """Sends the digest, continuing into further emails if one would be too heavy."""
+    for part, html, text, images in render_parts(digest):
+        send_email(cfg, part.subject, text, html, images)
+        size = sum(len(b) for b in images.values()) / 1024 / 1024
+        log.info("Sent “%s” to %s (%d posts, %.1f MB of photos)",
+                 part.subject, cfg.digest_to, part.post_count, size)
 
 
 def save_seen(state: State, newest: dict[str, datetime]) -> None:
