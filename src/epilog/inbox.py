@@ -49,9 +49,11 @@ class Changes:
     not_found_for_removal: list[str]
 
 
-def process_replies(cfg: Config, state: State) -> int:
+def process_replies(cfg: Config, state: State, debug: bool = False) -> int:
     """Handle new replies to digests. Returns how many replies were processed."""
-    replies = _fetch_replies(cfg, set(state.processed_replies))
+    replies = _fetch_replies(cfg, set(state.processed_replies), debug=debug)
+    if debug and not replies:
+        log.info("No unprocessed replies found (welcome pending: %s)", state.welcome_pending)
     for reply in replies:
         adds, removes = parse_handles(reply.body)
         log.info("Reply %s: add %s, remove %s", reply.message_id, adds, removes)
@@ -169,14 +171,43 @@ def _reply_subject(subject: str) -> str:
     return subject if subject.lower().startswith("re:") else f"Re: {subject}"
 
 
-def _fetch_replies(cfg: Config, processed: set[str]) -> list[Reply]:
+def _mailbox(address: str) -> str:
+    """Gmail ignores dots and +tags, so compare addresses the way Gmail does."""
+    local, _, domain = address.strip().lower().partition("@")
+    local = local.split("+")[0]
+    if domain in ("gmail.com", "googlemail.com"):
+        local = local.replace(".", "")
+    return f"{local}@{domain}"
+
+
+def _select_search_folder(imap: imaplib.IMAP4_SSL) -> str:
+    """All Mail if we can find it — a reply doesn't always land in the inbox."""
+    try:
+        _, boxes = imap.list()
+        for line in boxes or []:
+            text = line.decode(errors="replace") if isinstance(line, bytes) else str(line)
+            if "\\All" in text:
+                name = text.rsplit(' "/" ', 1)[-1].strip()
+                if imap.select(name, readonly=True)[0] == "OK":
+                    return name
+    except imaplib.IMAP4.error:
+        pass
+    imap.select("INBOX", readonly=True)
+    return "INBOX"
+
+
+def _fetch_replies(cfg: Config, processed: set[str], debug: bool = False) -> list[Reply]:
     since = (datetime.now() - LOOKBACK).strftime("%d-%b-%Y")
+    # a reply can come from the sending address or from wherever the digest is read
+    mine = {_mailbox(cfg.gmail_address), _mailbox(cfg.digest_to)}
     imap = imaplib.IMAP4_SSL(IMAP_HOST)
     try:
         imap.login(cfg.gmail_address, cfg.gmail_app_password)
-        imap.select("INBOX", readonly=True)
-        _, data = imap.uid("SEARCH", None, "SINCE", since, "FROM", f'"{cfg.gmail_address}"')
+        folder = _select_search_folder(imap)
+        _, data = imap.uid("SEARCH", None, "SINCE", since)
         uids = data[0].split()
+        if debug:
+            log.info("Searching %s since %s: %d messages", folder, since, len(uids))
         if not uids:
             return []
 
@@ -186,19 +217,27 @@ def _fetch_replies(cfg: Config, processed: set[str]) -> list[Reply]:
         wanted = []
         _, headers = imap.uid(
             "FETCH", b",".join(uids),
-            "(BODY.PEEK[HEADER.FIELDS (MESSAGE-ID SUBJECT FROM IN-REPLY-TO REFERENCES)])")
+            "(FLAGS BODY.PEEK[HEADER.FIELDS (MESSAGE-ID SUBJECT FROM IN-REPLY-TO REFERENCES)])")
         ours = f"@{EPILOG_MSGID_DOMAIN}>"
         for part in headers:
             if not isinstance(part, tuple):
                 continue
             uid = re.search(rb"UID (\d+)", part[0]).group(1)
+            draft = b"\\Draft" in part[0]
             h = email.message_from_bytes(part[1], policy=default_policy)
             msg_id, subject = (h["Message-ID"] or "").strip(), str(h["Subject"] or "")
-            sender = parseaddr(str(h["From"] or ""))[1].lower()
+            sender = parseaddr(str(h["From"] or ""))[1]
             replying_to_epilog = ours in f"{h['In-Reply-To'] or ''} {h['References'] or ''}"
-            if (msg_id and msg_id not in processed and not msg_id.endswith(ours)
-                    and replying_to_epilog and sender == cfg.gmail_address.lower()):
+            if not replying_to_epilog or msg_id.endswith(ours):
+                continue          # not a reply to one of our emails (or is one of ours)
+            if debug:
+                log.info("Reply candidate %s from %s%s%s", subject[:40], sender,
+                         " [draft]" if draft else "",
+                         " [already processed]" if msg_id in processed else "")
+            if msg_id and msg_id not in processed and not draft and _mailbox(sender) in mine:
                 wanted.append((uid, msg_id, subject))
+            elif debug and _mailbox(sender) not in mine:
+                log.info("  ignored: sender isn't %s", " or ".join(sorted(mine)))
 
         replies = []
         for uid, msg_id, subject in wanted:

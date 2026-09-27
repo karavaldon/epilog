@@ -74,12 +74,14 @@ def cmd_run(args) -> int:
 
 def cmd_inbox(args) -> int:
     cfg = _require_config()
-    return 0 if _process_replies(cfg, State()) is not None else 1
+    if args.debug:
+        print(f"Reading {cfg.gmail_address}; replies accepted from that address or {cfg.digest_to}.")
+    return 0 if _process_replies(cfg, State(), debug=args.debug) is not None else 1
 
 
-def _process_replies(cfg: Config, state: State) -> int | None:
+def _process_replies(cfg: Config, state: State, debug: bool = False) -> int | None:
     try:
-        count = process_replies(cfg, state)
+        count = process_replies(cfg, state, debug=debug)
     except AuthError as e:
         log.error("Instagram rejected Epilog's connection while checking replies: %s", e)
         return None
@@ -265,7 +267,9 @@ def main() -> None:
                      help="re-render the last digest from the cache — no Instagram calls, state unchanged")
     run.set_defaults(func=cmd_run)
 
-    sub.add_parser("inbox", help="process email replies that add/remove accounts").set_defaults(func=cmd_inbox)
+    inbox = sub.add_parser("inbox", help="process email replies that add/remove accounts")
+    inbox.add_argument("--debug", action="store_true", help="explain what was found and what was skipped")
+    inbox.set_defaults(func=cmd_inbox)
     sub.add_parser("check", help="show which followed accounts Instagram's API can read").set_defaults(
         func=cmd_check)
 

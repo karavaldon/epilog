@@ -49,16 +49,22 @@ class Digest:
 
     @property
     def subject(self) -> str:
-        day = f"⁕ {self.generated_at:%A, %b %-d}"
+        day = f"⁕ Your {self.generated_at:%A} epilog, {self.generated_at:%b %-d}"
         return day if self.parts == 1 else f"{day} ({self.part} of {self.parts})"
 
     @property
     def preheader(self) -> str:
-        """The gray preview line inboxes show under the subject."""
+        """The gray preview line inboxes show under the subject:
+        “7 new posts from @honeysatx, @marthas.atx and 3 more”."""
         if not self.post_count:
             return self.notices[0] if self.notices else "No new posts today"
-        counts = f"{_plural(self.post_count, 'post')} from {_plural(len(self.accounts), 'account')}"
-        return counts if self.parts == 1 else f"Part {self.part} of {self.parts} · {counts}"
+        named = [f"@{a.username}" for a in self.accounts[:3]]
+        rest = len(self.accounts) - len(named)
+        who = ", ".join(named[:-1]) + f" and {named[-1]}" if len(named) > 1 and not rest else ", ".join(named)
+        if rest:
+            who += f" and {rest} more"
+        line = f"{_plural(self.post_count, 'new post')} from {who}"
+        return line if self.parts == 1 else f"Part {self.part} of {self.parts} · {line}"
 
 
 def _plural(n: int, word: str) -> str:
