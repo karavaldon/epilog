@@ -169,6 +169,33 @@ def cmd_setup_token(args) -> int:
         return 1
 
 
+def cmd_update(args) -> int:
+    from . import update
+    from .render import VERSION
+
+    try:
+        release = update.latest_release()
+        tag = release.get("tag_name", "")
+        if update._version_tuple(tag) <= update._version_tuple(VERSION):
+            print(f"Epilog is up to date (v{VERSION}).")
+            return 0
+        print(f"Update available: {tag} (you have v{VERSION})")
+        if release.get("body"):
+            first = release["body"].strip().splitlines()[0]
+            print(f"  {first}")
+        if args.check:
+            print("Run `uv run epilog update` to install it.")
+            return 0
+        print("Downloading and replacing the program files…")
+        folder = update.install(release)
+    except update.UpdateError as e:
+        print(f"Update failed: {e}")
+        return 1
+    print(f"Updated {folder} to {tag}. Your settings, accounts and schedule are unchanged.")
+    print("The previous version is kept in cache/previous-version.")
+    return 0
+
+
 def cmd_schedule(args) -> int:
     cfg = load_config()
     if args.action == "install":
@@ -276,6 +303,10 @@ def main() -> None:
     sched = sub.add_parser("schedule", help="install, remove or show the background jobs")
     sched.add_argument("action", choices=["install", "uninstall", "status"])
     sched.set_defaults(func=cmd_schedule)
+
+    upd = sub.add_parser("update", help="install the newest release, keeping your settings")
+    upd.add_argument("--check", action="store_true", help="only say whether an update exists")
+    upd.set_defaults(func=cmd_update)
 
     sub.add_parser("setup-token", help="reconnect Instagram only").set_defaults(func=cmd_setup_token)
     sub.add_parser("test-email", help="send a test email via Gmail").set_defaults(func=cmd_test_email)
