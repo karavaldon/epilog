@@ -54,6 +54,15 @@ def collect(cfg: Config, accounts: list[str], state: State,
             digest.accounts.append(account)
 
     digest.accounts.sort(key=lambda a: a.posts[0].timestamp, reverse=True)
+    if accounts and len(digest.failed) == len(accounts):
+        # every single lookup failed — most often the person's own Instagram is no
+        # longer a professional account, which is the one thing Epilog can't work without
+        digest.notices.append(
+            "Instagram wouldn't answer for any of your accounts today. If you switched your "
+            "own Instagram back to a personal account, Epilog can't read posts until it's a "
+            "Creator or Business account again and linked to your Facebook Page. Otherwise "
+            "this is usually temporary and tomorrow's epilog should be back to normal."
+        )
     if cfg.token_expires_at and cfg.token_expires_at - now < TOKEN_WARNING:
         digest.notices.append(
             f"Your Instagram connection expires {cfg.token_expires_at.astimezone():%a %b %-d}. "

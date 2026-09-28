@@ -10,18 +10,18 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,500&family=Inter:ital,wght@0,400;0,500;0,600;1,700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #efeff9;
+    --bg: #eeeeee;
     --card: #ffffff;
     --ink: #000000;
-    --muted: #4a4a55;
-    --faint: #7b7b8a;
-    --accent: #5760dd;      /* eyebrow labels */
-    --key: #b6bbfe;         /* primary buttons */
-    --inset: #f4f4fb;
+    --muted: #4a4a4a;
+    --faint: #7b7b7b;
+    --accent: #000000;      /* eyebrow labels */
+    --key: #d8d8d8;         /* primary buttons, hovers */
+    --inset: #f4f4f4;
     --line: 3px solid var(--ink);
     --radius: 22px;
     --radius-sm: 12px;
-    --ok: #5760dd;          /* success reads in the brand indigo, not green */
+    --ok: #000000;          /* success reads as plain black */
     --bad: #b3261e;
     --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
@@ -36,24 +36,28 @@
   a { color: inherit; }
   button, input, textarea { font: inherit; color: inherit; }
 
-  /* header + stepper */
+  /* header: one asterisk per screen, the current one large */
   header { text-align: center; margin-bottom: 24px; }
-  /* the mark stays centred and turns 30° with each step */
-  .track { position: relative; display: flex; justify-content: center; }
-  .roller { position: relative; }
+  .track {
+    position: relative; display: flex; justify-content: center; align-items: center;
+    gap: 14px; min-height: 58px;
+  }
   .mark {
-    display: block; width: 58px; height: 58px; border: 0; padding: 0; cursor: pointer;
-    color: var(--ink);
-    /* the artwork is drawn in currentColor via a mask, so it can change colour on hover */
+    display: block; width: 18px; height: 18px; border: 0; padding: 0; flex: none;
+    color: #c4c4c4; cursor: default;
+    /* the artwork is drawn in currentColor via a mask, so it can change colour */
     background-color: currentColor;
     -webkit-mask: url("/assets/asterisk.svg") center / contain no-repeat;
     mask: url("/assets/asterisk.svg") center / contain no-repeat;
-    transition: transform .9s cubic-bezier(.35,.05,.2,1), background-color .12s;
+    transition: background-color .15s, width .25s ease, height .25s ease;
   }
-  .mark:hover, .mark[aria-expanded="true"] { color: var(--accent); }
+  .mark.done { color: var(--muted); cursor: pointer; }
+  .mark.current { width: 52px; height: 52px; color: var(--ink); cursor: pointer; }
+  .mark.done:hover, .mark.current:hover, .mark[aria-expanded="true"] { color: var(--accent); }
   .mark:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; border-radius: 8px; }
 
   /* step navigation, opened from the asterisk */
+  header { position: relative; }
   .stepmenu {
     position: absolute; top: calc(100% - 6px); left: 50%; transform: translateX(-50%);
     z-index: 5; min-width: 230px; text-align: left;
@@ -65,7 +69,7 @@
     border: 0; background: none; padding: 9px 10px; border-radius: 8px; cursor: pointer;
     font: 500 13px/1.3 var(--mono);
   }
-  .stepmenu button:hover:not([disabled]) { background: #dfe1ff; }
+  .stepmenu button:hover:not([disabled]) { background: #e4e4e4; }
   .stepmenu button[disabled] { opacity: .45; cursor: default; }
   .stepmenu button[aria-current="true"] { background: var(--key); font-weight: 600; }
   .stepmenu .num { font: 500 11px/1 var(--mono); color: var(--faint); width: 14px; flex: none; }
@@ -102,7 +106,6 @@
   @keyframes nudge-upright { 0%, 65%, 100% { transform: none; } 35% { transform: translate(4px, -4px); } }
   @media (prefers-reduced-motion: reduce) {
     .pill:hover .arrow { animation: none; }
-    .mark { transition: none; }
   }
 
 
@@ -137,7 +140,7 @@
   .trail { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: 15px/1.6 var(--sans); }
   .trail b { font-weight: 400; }
   .trail span, .hl {
-    font: 500 13px/1.4 var(--mono); background: #e8e9fa;
+    font: 500 13px/1.4 var(--mono); background: #e8e8e8;
     border-radius: 0; padding: 2px 5px;
   }
   .hl { white-space: nowrap; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
@@ -154,7 +157,7 @@
   label.lbl { display: block; font: 500 12px/1.3 var(--mono); color: var(--ink); letter-spacing: .04em; text-transform: uppercase; margin: 18px 0 8px; }
   .fieldwrap { display: flex; gap: 8px; }
   .field, textarea {
-    width: 100%; border: var(--line); border-radius: var(--radius-sm); background: #dfe1ff;
+    width: 100%; border: var(--line); border-radius: var(--radius-sm); background: #e4e4e4;
     padding: 11px 14px; font: 13px/1.4 var(--mono);
   }
   .field::placeholder, textarea::placeholder { color: var(--faint); }
@@ -162,7 +165,7 @@
   /* width includes the padding, so leave room for "12:00 pm" plus both sides */
   .field.time { width: calc(9ch + 34px); font-size: 22px; padding: 10px 14px; text-align: center; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
-  .chip { font: 500 13px/1.4 var(--mono); background: #e8e9fa; border-radius: 0; padding: 2px 5px; }
+  .chip { font: 500 13px/1.4 var(--mono); background: #e8e8e8; border-radius: 0; padding: 2px 5px; }
 
   .copied { font: 500 13px/1.4 var(--mono); color: var(--accent); animation: fade .18s ease-out; }
   .copied.bad { color: var(--bad); }
@@ -192,11 +195,11 @@
   .x { border: 0; background: none; cursor: pointer; font: 18px/1 var(--mono); color: var(--muted); padding: 4px 6px; }
   .x:hover { color: var(--ink); }
 
-  .choice { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: var(--line); border-radius: var(--radius-sm); margin-top: 8px; cursor: pointer; background: #dfe1ff; font: 14px/1.5 var(--sans); }
+  .choice { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: var(--line); border-radius: var(--radius-sm); margin-top: 8px; cursor: pointer; background: #e4e4e4; font: 14px/1.5 var(--sans); }
   /* prerequisite checkboxes */
   .check {
     display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none;
-    margin-top: 18px; padding: 12px 14px; background: #dfe1ff;
+    margin-top: 18px; padding: 12px 14px; background: #e4e4e4;
     border: 2px solid var(--ink); border-radius: var(--radius-sm);
     font: 600 14px/1.4 var(--sans);
   }
@@ -233,16 +236,16 @@
     display: block; width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
     padding: 7px 8px; border-radius: 6px; font: 500 12px/1.3 var(--mono);
   }
-  .demo-menu button:hover, .demo-menu button:focus-visible { background: #dfe1ff; }
+  .demo-menu button:hover, .demo-menu button:focus-visible { background: #e4e4e4; }
   .demo-menu button[aria-current="true"] { background: var(--key); font-weight: 600; }
   /* footer */
   .foot {
     display: flex; align-items: flex-start; gap: 12px;
-    margin-top: 44px; padding-top: 20px; border-top: 2px solid #d9d9ec;
+    margin-top: 44px; padding-top: 20px; border-top: 2px solid #d6d6d6;
   }
   .foot-mark {
-    width: 16px; height: 16px; flex: none; margin-top: 3px; opacity: .45;
-    background-color: var(--ink);
+    width: 16px; height: 16px; flex: none; margin-top: 3px;
+    background-color: var(--muted);   /* same gray as the “Epilog” label beside it */
     -webkit-mask: url("/assets/asterisk.svg") center / contain no-repeat;
     mask: url("/assets/asterisk.svg") center / contain no-repeat;
   }
@@ -283,19 +286,15 @@
 </div>
 <main>
   <header>
-    <div class="track">
-      <div class="roller" id="roller">
-        <button class="mark" id="mark" aria-haspopup="menu" aria-expanded="false" aria-label="Setup steps"></button>
-        <nav class="stepmenu" id="steps" role="menu" aria-label="Setup steps" hidden></nav>
-      </div>
-    </div>
+    <div class="track" id="track" role="group" aria-label="Setup progress"></div>
+    <nav class="stepmenu" id="steps" role="menu" aria-label="Setup steps" hidden></nav>
   </header>
 
   <!-- INTRO -->
   <section data-screen="intro" hidden>
     <div class="card fade">
       <div class="meta"><span>Setup takes 10–20 min</span></div>
-      <h2>Get a daily email with the Instagram feed you care about.</h2>
+      <h2>Get a daily email with the Instagram feed you care about</h2>
       <p>Epilog reads Instagram posts through its official API and emails your feed to you. It will run on this computer only.</p>
     </div>
     <div class="card fade">
@@ -314,14 +313,14 @@
   <section data-screen="prep" hidden>
     <div class="card fade">
       <div class="meta"><span>Before you start</span><span>about 15 min</span></div>
-      <h2>Three things to set up on Instagram and Facebook.</h2>
+      <h2>Three things to set up on Instagram and Facebook</h2>
       <p>Instagram only allows apps to read posts through a professional account linked to a Facebook Page. Tick each one off as you go; this page remembers them.</p>
     </div>
 
     <div class="card fade">
       <div class="meta"><span>Instagram app</span></div>
-      <p><b>Switch to a professional account.</b> Creator or Business both work — it's free, and you can switch back later.</p>
-      <p class="trail"><b>In the Instagram app:</b><span>Settings</span><span>Account type and tools</span><span>Switch to professional account</span></p>
+      <p><b>Switch to a professional account.</b> Creator or Business both work, and it's free. Your account needs to stay professional for Epilog to keep reading Instagram — switching back to personal stops your epilogs until you switch again.</p>
+      <p class="trail"><b>In your Instagram account:</b><span>Settings</span><span>Account type and tools</span><span>Choose Creator or Business</span></p>
       <label class="check"><input type="checkbox" data-prereq="ig"><span>My Instagram is Creator or Business</span></label>
     </div>
 
@@ -597,7 +596,35 @@ function done(step) {
 
 const SCREEN_ORDER = ["intro", ...STEPS.map(([k]) => k), "done"];
 
+const SCREEN_LABELS = { intro: "Welcome", prep: "Before you start", instagram: "Instagram",
+                        gmail: "Gmail", time: "Delivery time", accounts: "Accounts", done: "All set" };
+
+function renderTrack(screen) {
+  const here = SCREEN_ORDER.indexOf(screen);
+  $("track").replaceChildren(...SCREEN_ORDER.map((key, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    const visited = key === "intro" || i <= here || done(key);   // how it looks
+    const reachable = visited || S?.demo;                        // whether it can be clicked
+    b.className = "mark" + (key === screen ? " current" : visited ? " done" : "");
+    b.title = SCREEN_LABELS[key] || key;
+    b.setAttribute("aria-label", b.title + (key === screen ? " (current step)" : ""));
+    b.setAttribute("aria-current", key === screen ? "step" : "false");
+    if (key === screen) {                       // the big one opens the list of steps
+      b.setAttribute("aria-haspopup", "menu");
+      b.setAttribute("aria-expanded", "false");
+      b.onclick = (e) => { e.stopPropagation(); markMenu($("steps").hidden); };
+    } else if (reachable) {
+      b.onclick = () => show(key);
+    } else {
+      b.disabled = true;
+    }
+    return b;
+  }));
+}
+
 function renderSteps(screen) {
+  renderTrack(screen);
   const nav = $("steps");
   nav.replaceChildren(...STEPS.map(([key, label], i) => {
     const b = document.createElement("button");
@@ -615,31 +642,13 @@ function renderSteps(screen) {
   }));
 }
 
-// The mark rolls along the top: further right and 30° further round at each step.
-function rollTo(screen, animate) {
-  const i = Math.max(0, SCREEN_ORDER.indexOf(screen));
-  const progress = i / (SCREEN_ORDER.length - 1);
-  const mark = $("mark");
-  mark.style.transition = animate ? "" : "none";
-  mark.style.transform = `rotate(${i * 30}deg)`;
-  if (!animate) requestAnimationFrame(() => { mark.style.transition = ""; });
-}
 
-function rollWhenAtTop(screen) {
-  const started = performance.now();
-  const check = () => {
-    if (window.scrollY < 8 || performance.now() - started > 1500) rollTo(screen, true);
-    else requestAnimationFrame(check);
-  };
-  requestAnimationFrame(check);
-}
 
-window.addEventListener("resize", () => rollTo(currentScreen() || "intro", false));
 
 function markMenu(open) {
-  const nav = $("steps"), mark = $("mark");
+  const nav = $("steps");
   nav.hidden = !open;
-  mark.setAttribute("aria-expanded", String(open));
+  $("track").querySelector(".mark.current")?.setAttribute("aria-expanded", String(open));
   if (open) nav.querySelector("button:not([disabled])")?.focus();
 }
 
@@ -647,13 +656,10 @@ function currentScreen() {
   return document.querySelector("[data-screen]:not([hidden])")?.dataset.screen;
 }
 
-function show(screen, firstRender = false) {
-  const moved = screen !== currentScreen();
+function show(screen) {
   document.querySelectorAll("[data-screen]").forEach(s => s.hidden = s.dataset.screen !== screen);
   markMenu(false);
   renderSteps(screen);
-  if (firstRender || !moved) rollTo(screen, false);
-  else rollWhenAtTop(screen);        // wait until the page is back at the top, so the roll is seen
   if (screen === "prep") renderPrep();
   if (screen === "instagram") renderInstagram();
   if (screen === "gmail") renderGmail();
@@ -835,7 +841,7 @@ $("to-done").onclick = () => show("done");
 
 // ---------------------------------------------------------------- Done
 // the project's purples: accent, button, highlight, field
-const CONFETTI_COLORS = ["#5760dd", "#b6bbfe", "#9aa0f2", "#c9cdff"];
+const CONFETTI_COLORS = ["#000000", "#4a4a4a", "#8a8a8a", "#c4c4c4"];
 let celebrated = false;
 
 function celebrate() {
@@ -941,12 +947,11 @@ function animateArrows(root = document) {
   });
 }
 
-$("mark").onclick = (e) => { e.stopPropagation(); markMenu($("steps").hidden); };
 document.addEventListener("click", (e) => {
   if (!$("steps").hidden && !$("steps").contains(e.target)) markMenu(false);
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !$("steps").hidden) { markMenu(false); $("mark").focus(); }
+  if (e.key === "Escape" && !$("steps").hidden) { markMenu(false); $("track").querySelector(".mark.current")?.focus(); }
 });
 
 document.querySelectorAll("[data-go]").forEach(b => b.onclick = () => show(b.dataset.go));

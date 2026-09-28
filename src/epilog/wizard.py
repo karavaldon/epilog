@@ -96,7 +96,8 @@ def step_instagram() -> bool:
             "This is the longest part of setup (about 15 minutes). Keep this window open while you work.\n")
         say(f"{BOLD}1. Make your Instagram a professional account{RESET}")
         say("   In the Instagram app: Settings → Account type and tools → Switch to professional account.\n"
-            "   Creator or Business both work. It's free and you can switch back later.\n")
+            "   Creator or Business both work, and it's free. Keep it professional for as long as you\n"
+        "   want Epilog to work — switching back to personal stops it reading Instagram.\n")
         say(f"{BOLD}2. Link it to a Facebook Page{RESET}")
         say("   Create a Page (a placeholder is fine — nobody needs to see it), then in the Page's settings:\n"
             "   Linked accounts → Instagram → Connect account.")

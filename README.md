@@ -20,7 +20,8 @@ Free and open source (MIT). Made by [Kara Valdon](https://karavaldon.com/epilog)
 ## What you'll need
 
 - **A Mac or Linux computer.** It needs to be awake at delivery time; if it's asleep, your epilog arrives when it wakes.
-- **An Instagram account switched to Creator or Business.** This is free, and you can switch back later.
+- **An Instagram account switched to Creator or Business.** This is free. It needs to stay
+  professional while you use Epilog: switching back to personal stops it working.
 - **A Facebook Page linked to that Instagram account.** A placeholder Page is fine; nobody needs to see it.
 - **A free Meta developer account**, to create a small personal app
 - **Gmail** with 2-Step Verification turned on
