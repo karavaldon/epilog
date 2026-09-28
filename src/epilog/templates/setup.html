@@ -42,19 +42,29 @@
     position: relative; display: flex; justify-content: center; align-items: center;
     gap: 14px; min-height: 58px;
   }
+  .step { position: relative; display: flex; align-items: center; }
   .mark {
-    display: block; width: 18px; height: 18px; border: 0; padding: 0; flex: none;
-    color: #c4c4c4; cursor: default;
+    display: block; width: 20px; height: 20px; border: 0; padding: 0; flex: none;
+    color: #d0d0d0; cursor: default;
     /* the artwork is drawn in currentColor via a mask, so it can change colour */
     background-color: currentColor;
     -webkit-mask: url("/assets/asterisk.svg") center / contain no-repeat;
     mask: url("/assets/asterisk.svg") center / contain no-repeat;
-    transition: background-color .15s, width .25s ease, height .25s ease;
+    transition: background-color .15s;
   }
-  .mark.done { color: var(--muted); cursor: pointer; }
-  .mark.current { width: 52px; height: 52px; color: var(--ink); cursor: pointer; }
-  .mark.done:hover, .mark.current:hover, .mark[aria-expanded="true"] { color: var(--accent); }
-  .mark:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; border-radius: 8px; }
+  .mark.done { color: #8a8a8a; }
+  .mark.current { color: var(--ink); }
+  .mark.clickable { cursor: pointer; }
+  .mark.done:hover, .mark.current:hover, .mark[aria-expanded="true"] { color: var(--ink); }
+  .mark:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+  /* name on hover — the mark itself is masked, so the label lives on the wrapper */
+  .tip {
+    position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; border-radius: 6px; padding: 4px 8px;
+    font: 500 11px/1.3 var(--mono); white-space: nowrap; pointer-events: none;
+    opacity: 0; transition: opacity .12s;
+  }
+  .step:hover .tip, .mark:focus-visible ~ .tip { opacity: 1; }
 
   /* step navigation, opened from the asterisk */
   header { position: relative; }
@@ -94,9 +104,8 @@
   .pill.primary { background: var(--key); }
   .pill.primary:hover { background: var(--key); border-color: var(--accent); }
   .pill.small { padding: 10px 16px; }   /* same height as a full-size button, just narrower */
-  /* 8px of breathing room above and below buttons inside cards
-     (padding, so the inline margin-top:0 on some rows still applies) */
-  .card .row { padding: 8px 0; }
+  /* one consistent gap around every button row inside a card */
+  .card .row { margin-top: 0; padding: 12px 0 18px; }
   .pill[disabled] { opacity: .45; cursor: default; transform: none; }
   /* on hover, the arrow drifts in the direction it points */
   .arrow { display: inline-block; }
@@ -129,6 +138,7 @@
   ol.how { font: 15px/1.6 var(--sans); margin: 4px 0 14px; padding-left: 22px; }
   ol.how::marker, ol.how li::marker { font: 500 13px var(--mono); color: var(--ink); }
   ol.how li { margin-bottom: 12px; }
+  ol.how li > .row:last-child { padding-bottom: 0; }
   ol.how li:last-child { margin-bottom: 0; }
   /* short literals stay inline and never split across lines */
   .path {
@@ -167,8 +177,6 @@
   .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
   .chip { font: 500 13px/1.4 var(--mono); background: #e8e8e8; border-radius: 0; padding: 2px 5px; }
 
-  .copied { font: 500 13px/1.4 var(--mono); color: var(--accent); animation: fade .18s ease-out; }
-  .copied.bad { color: var(--bad); }
 
   /* status */
   .status { font: 14px/1.55 var(--sans); margin-top: 14px; white-space: pre-line; }
@@ -326,21 +334,25 @@
 
     <div class="card fade">
       <div class="meta"><span>Facebook Page</span></div>
-      <p><b>Create a Page.</b> This page will be a placeholder nobody sees. Name it anything — “My Epilog” works — and pick any category, like <span class="hl">Personal blog</span>. Then link your Instagram to it.</p>
+      <p><b>Create a Page.</b> This page will be a placeholder nobody sees. Name it anything (“My Epilog” works) and pick any category, like <span class="hl">Personal blog</span>.</p>
+      <div class="row"><a class="pill small" href="https://www.facebook.com/pages/create" target="_blank" rel="noopener">Create a Page ↗</a></div>
+      <p><b>Then link your Instagram to it:</b></p>
       <p class="trail"><b>In the Page's settings:</b><span>Linked accounts</span><span>Instagram</span><span>Connect account</span></p>
-      <div class="row" style="margin-top:0"><a class="pill small" href="https://www.facebook.com/pages/create" target="_blank" rel="noopener">Create a Page ↗</a></div>
       <label class="check"><input type="checkbox" data-prereq="page"><span>My Page is linked to my Instagram</span></label>
     </div>
 
     <div class="card fade">
       <div class="meta"><span>Meta developer app</span></div>
       <ol class="how">
-        <li><b>Create app</b>, then choose the use case <b>“Manage messaging &amp; content on Instagram”</b></li>
-        <li><b>Customize → API setup with Facebook login</b>, then click <b>Add required content permissions</b></li>
-        <li>Under <span class="hl">Permissions and features</span>, also add <span class="hl">instagram_manage_insights</span></li>
-        <li>Leave it in <b>Development</b> mode. That's all a personal tool needs.</li>
+        <li>
+          <b>Go to Meta for Developers and open an account.</b> Typically a <span class="hl">Get started</span> button or something similar.
+          <div class="row"><a class="pill small" href="https://developers.facebook.com/apps" target="_blank" rel="noopener">Open Meta for Developers ↗</a></div>
+        </li>
+        <li><span class="hl">Create app</span>, then under <span class="hl">All</span> use cases choose <span class="hl">Manage messaging &amp; content on Instagram</span></li>
+        <li>In your new app go to <span class="hl">Customize</span> and choose <span class="hl">API setup with Facebook login</span>, then click <span class="hl">Add required content permissions</span> (this automatically adds 5 permissions we'll need).</li>
+        <li>The button will change to <span class="hl">Permissions and features</span> — click it, or find <span class="hl">Permissions and features</span> in the left menu — then add one more permission: <span class="hl">instagram_manage_insights</span></li>
+        <li>No need to publish. Leave it in <span class="hl">Development</span> mode; that's all a personal tool needs.</li>
       </ol>
-      <div class="row" style="margin-top:0"><a class="pill small" href="https://developers.facebook.com/apps" target="_blank" rel="noopener">Open Meta for Developers ↗</a></div>
       <label class="check"><input type="checkbox" data-prereq="app"><span>My app is created</span></label>
     </div>
 
@@ -366,9 +378,9 @@
       <div class="card fade">
         <div class="meta"><span>Your app's ID and secret</span></div>
         <p>Open the Meta app you made in the last step and go to its basic settings.</p>
+        <div class="row"><a class="pill small" href="https://developers.facebook.com/apps" target="_blank" rel="noopener">Open my apps ↗</a></div>
         <p class="trail"><b>In the left sidebar:</b><span>App settings</span><span>Basic</span></p>
-        <p>The App Secret is hidden until you click <span class="hl">Show</span> next to it.</p>
-        <div class="row" style="margin-top:0;margin-bottom:4px"><a class="pill small" href="https://developers.facebook.com/apps" target="_blank" rel="noopener">Open my apps ↗</a></div>
+        <p><b>Copy and paste the App ID and the App Secret below:</b></p>
         <label class="lbl" for="app-id">App ID</label>
         <input class="field" id="app-id" inputmode="numeric" autocomplete="off" placeholder="e.g. 1234567890123456">
         <label class="lbl" for="app-secret">App Secret</label>
@@ -381,16 +393,12 @@
       <div class="card fade">
         <div class="meta"><span>Access token</span></div>
         <p><b>Open Graph API Explorer</b> — it's Meta's tool for creating a token. Then follow the steps below in that tab.</p>
-        <div class="row" style="margin-top:0"><a class="pill small" href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener">Open Graph API Explorer ↗</a></div>
+        <div class="row"><a class="pill small" href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener">Open Graph API Explorer ↗</a></div>
         <ol class="how">
-          <li>Pick your app in the <span class="hl">Meta App</span> menu, top right</li>
-          <li>Under <span class="hl">User or Page</span>, choose <span class="hl">Get User Access Token</span></li>
-          <li>Add these permissions:
+          <li>Make sure your app is selected in the <span class="hl">Meta App</span> dropdown</li>
+          <li>In the <span class="hl">User or Page</span> dropdown, choose <span class="hl">User Token</span></li>
+          <li>Add these 5 permissions by typing them into the <span class="hl">Add Permissions</span> field and selecting them from the dropdown:
             <div class="chips" id="perm-chips"></div>
-            <div class="row" style="margin-top:0">
-              <button class="pill small" type="button" id="copy-perms">Copy permission names</button>
-              <span class="copied" id="copy-note" hidden>Copied ✓</span>
-            </div>
           </li>
           <li>Click <span class="hl">Generate Access Token</span>, and pick the Page linked to your Instagram when asked</li>
           <li>Copy the token and paste it below</li>
@@ -429,12 +437,12 @@
       <div class="card fade">
         <div class="meta"><span>Turn on 2-Step Verification</span><span>skip if it's on</span></div>
         <p class="muted">Google only offers app passwords when 2-Step Verification is on.</p>
-        <div class="row" style="margin-top:0"><a class="pill small" href="https://myaccount.google.com/signinoptions/twosv" target="_blank" rel="noopener">2-Step Verification ↗</a></div>
+        <div class="row"><a class="pill small" href="https://myaccount.google.com/signinoptions/twosv" target="_blank" rel="noopener">2-Step Verification ↗</a></div>
       </div>
       <div class="card fade">
         <div class="meta"><span>Create an app password</span></div>
         <p>Name it <b>Epilog</b> and copy the 16-letter code. Make sure you're signed in to the Google account you want to use.</p>
-        <div class="row" style="margin-top:0"><a class="pill small" href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">App passwords ↗</a></div>
+        <div class="row"><a class="pill small" href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">App passwords ↗</a></div>
         <label class="lbl" for="gm-address">Gmail address</label>
         <input class="field" id="gm-address" type="email" autocomplete="email" placeholder="you@gmail.com">
         <label class="lbl" for="gm-password">App password</label>
@@ -451,7 +459,7 @@
   <!-- 3. TIME -->
   <section data-screen="time" hidden>
     <div class="card fade">
-      <div class="meta"><span>Every day</span></div>
+      <div class="meta"><span>Your everyday epilog</span></div>
       <h2>When should your epilog arrive?</h2>
       <p class="muted small" id="time-note">Epilog runs on this computer, not on a server somewhere, so it needs to be awake at that time. If it's asleep, your epilog arrives when you next wake it.</p>
       <input class="field time" id="time" type="text" inputmode="text" autocomplete="off"
@@ -471,7 +479,7 @@
 
     <div class="card fade">
       <div class="meta"><span>Add accounts</span><span>one per line</span></div>
-      <p class="muted small">Handles, @handles, or profile links all work. Only <b>Business and Creator</b> accounts can be read (most brands, shops, artists and publications). Personal accounts that can't be read will be noted in the footer.</p>
+      <p class="muted small">Handles, @handles, or profile links all work. Only <b>Business and Creator</b> accounts can be read (most brands, shops, artists and publications). You can dump all the accounts you're interested in, we'll let you know which personal accounts can't be read.</p>
       <textarea id="handles" placeholder="@yourfavoritebakery&#10;a.local.gallery&#10;instagram.com/that.record.shop"></textarea>
       <div class="row"><button class="pill primary" id="check">Check accounts</button></div>
       <div class="status" id="check-status" role="status"></div>
@@ -481,12 +489,12 @@
 
     <div class="card fade">
       <div class="meta"><span>Or do it by email</span></div>
-      <p class="muted small">Get a welcome email and reply with the handles instead. Handy for adding accounts from your phone.</p>
-      <div class="row" style="margin-top:0"><button class="pill small" id="welcome">Email me instead</button></div>
+      <p class="muted small">We've emailed you a welcome note — reply to it with handles any time, which is handy from your phone. You can do both. Later on, replying to any epilog does the same thing, and “remove @handle” drops one.</p>
+      <div class="row"><button class="pill small" id="welcome">Send it again</button></div>
       <div class="status" id="welcome-status" role="status"></div>
     </div>
 
-    <div class="row"><button class="pill primary" id="to-done" hidden>Continue →</button></div>
+    <div class="row" style="justify-content:flex-end"><button class="pill primary" id="to-done">Continue →</button></div>
   </section>
 
   <!-- DONE -->
@@ -499,7 +507,7 @@
       <div class="meta"><span>See it now</span></div>
       <h2>Send my first epilog</h2>
       <p class="muted">Posts from the past week, from the accounts you added. It takes a minute or two.</p>
-      <div class="row" style="margin-top:0"><button class="pill primary" id="first">Send it now</button></div>
+      <div class="row"><button class="pill primary" id="first">Send it now</button></div>
       <div class="status" id="first-status" role="status"></div>
     </div>
     <div class="card fade">
@@ -591,7 +599,9 @@ function done(step) {
   return { prep: prereqsTicked().length === PREREQS.length || S.instagram.connected,
            instagram: S.instagram.connected, gmail: S.gmail.connected,
            time: S.schedule.installed || !S.schedule.supported,
-           accounts: S.accounts.length > 0 || S.welcomePending }[step];
+           // following someone is what finishes this step; the welcome email
+           // goes out on arrival, so it can't stand in for having accounts
+           accounts: S.accounts.length > 0 }[step];
 }
 
 const SCREEN_ORDER = ["intro", ...STEPS.map(([k]) => k), "done"];
@@ -607,19 +617,24 @@ function renderTrack(screen) {
     const visited = key === "intro" || i <= here || done(key);   // how it looks
     const reachable = visited || S?.demo;                        // whether it can be clicked
     b.className = "mark" + (key === screen ? " current" : visited ? " done" : "");
-    b.title = SCREEN_LABELS[key] || key;
-    b.setAttribute("aria-label", b.title + (key === screen ? " (current step)" : ""));
+    const label = SCREEN_LABELS[key] || key;
+    b.setAttribute("aria-label", label + (key === screen ? " (current step)" : ""));
     b.setAttribute("aria-current", key === screen ? "step" : "false");
     if (key === screen) {                       // the big one opens the list of steps
       b.setAttribute("aria-haspopup", "menu");
       b.setAttribute("aria-expanded", "false");
       b.onclick = (e) => { e.stopPropagation(); markMenu($("steps").hidden); };
+      b.classList.add("clickable");
     } else if (reachable) {
       b.onclick = () => show(key);
+      b.classList.add("clickable");
     } else {
       b.disabled = true;
     }
-    return b;
+    const step = document.createElement("span");
+    step.className = "step";
+    step.append(b, Object.assign(document.createElement("span"), { className: "tip", textContent: label }));
+    return step;
   }));
 }
 
@@ -648,7 +663,7 @@ function renderSteps(screen) {
 function markMenu(open) {
   const nav = $("steps");
   nav.hidden = !open;
-  $("track").querySelector(".mark.current")?.setAttribute("aria-expanded", String(open));
+  document.querySelector(".mark.current")?.setAttribute("aria-expanded", String(open));
   if (open) nav.querySelector("button:not([disabled])")?.focus();
 }
 
@@ -699,14 +714,6 @@ function renderInstagram(forceForm = false) {
 }
 
 $("perm-chips").append(...PERMS.map(p => Object.assign(document.createElement("span"), { className: "chip", textContent: p })));
-$("copy-perms").onclick = async () => {
-  const note = $("copy-note");
-  try { await navigator.clipboard.writeText(PERMS.join(", ")); note.textContent = "Copied ✓"; note.className = "copied"; }
-  catch { note.textContent = "Couldn't copy — select them above"; note.className = "copied bad"; }
-  note.hidden = false;
-  clearTimeout(note.dataset.timer);
-  note.dataset.timer = setTimeout(() => note.hidden = true, 2200);
-};
 $("ig-reconnect").onclick = () => renderInstagram(true);
 $("ig-connect").onclick = (e) => busy(e.target, async () => {
   status("ig-status", "Connecting to Meta…", "busy");
@@ -782,8 +789,10 @@ function renderAccounts() {
     row.append(who, x);
     return row;
   }));
-  $("to-done").hidden = !done("accounts");
-  if (S.welcomePending) status("welcome-status", "Welcome email sent. Reply to it with handles anytime.", "ok");
+  // always available: some people add their accounts by replying to the welcome email
+  $("to-done").hidden = false;
+  if (S.welcomePending) status("welcome-status", `Welcome email sent to ${S.gmail.address || "your inbox"}.`, "ok");
+  else sendWelcomeOnce();          // no need to ask — it's waiting for them either way
 }
 
 function accountRow(r) {
@@ -829,6 +838,20 @@ $("add").onclick = (e) => busy(e.target, async () => {
   renderAccounts();
 });
 
+// Sent automatically when you reach this step, so replying from a phone is always an option.
+let welcomeSending = false;
+async function sendWelcomeOnce() {
+  if (welcomeSending || S.welcomePending) return;
+  welcomeSending = true;
+  try {
+    const r = await api("/api/welcome", {});
+    if (r.error) return status("welcome-status", r.error, "bad");
+    S.welcomePending = true;
+    status("welcome-status", `Welcome email sent to ${r.to}.`, "ok");
+  } catch { /* the button below is the fallback */ }
+  finally { welcomeSending = false; }
+}
+
 $("welcome").onclick = (e) => busy(e.target, async () => {
   status("welcome-status", "Sending…", "busy");
   const r = await api("/api/welcome", {});
@@ -854,21 +877,22 @@ function celebrate() {
   const rand = (lo, hi) => lo + Math.random() * (hi - lo);
   const pieces = [];
 
-  // Physics follows canvas-confetti: velocity decays while gravity keeps pulling.
-  // Each piece sways side to side as it tips onto its edge, like falling paper.
-  // a popper: fires from a point at a given angle, scatters, then drops fast
-  function fire(count, { x, y, angle, spread = 55, startVelocity = 85, decay = 0.91,
-                         scalar = 1, ticks = 230, gravity = 3 }) {
+  // A popper: fires from a point, air drag bleeds off the launch speed while
+  // gravity accelerates the fall, so pieces arc up, hang, then drop away.
+  // Each one also tips onto its edge and slips sideways, like falling paper.
+  function fire(count, { x, y, angle, spread = 55, startVelocity = 115, decay = 0.91,
+                         scalar = 1, ticks = 170, gravity = 1.5 }) {
     for (let n = 0; n < count; n++) {
       const el = document.createElement("i");
       const size = 34 * scalar;
       el.style.cssText = `left:0;top:0;width:${size}px;height:${size}px;opacity:0;` +
         `color:${CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)]};`;
       box.append(el);
+      const heading = (angle + rand(-spread / 2, spread / 2)) * Math.PI / 180;
+      const speed = startVelocity * rand(0.55, 1);
       pieces.push({
         el, tick: 0, ticks, wait: Math.floor(rand(0, 6)), x, y,
-        angle: (angle + rand(-spread / 2, spread / 2)) * Math.PI / 180,
-        velocity: startVelocity * rand(0.55, 1),
+        vx: Math.cos(heading) * speed, vy: Math.sin(heading) * speed,
         decay, gravity: gravity * rand(0.85, 1.15), drift: rand(-0.3, 0.3),
         flip: rand(0, Math.PI * 2), flipSpeed: rand(0.06, 0.14) * (Math.random() < .5 ? -1 : 1),
         yaw: rand(0, Math.PI * 2), yawSpeed: rand(0.02, 0.06),
@@ -881,8 +905,8 @@ function celebrate() {
   const W = window.innerWidth, H = window.innerHeight;
   fire(13, { x: W * 0.02, y: H * 0.98, angle: -55 });                      // left → up and right
   fire(13, { x: W * 0.98, y: H * 0.98, angle: -125 });                     // right → up and left
-  fire(5, { x: W * 0.02, y: H * 0.98, angle: -42, scalar: 0.7, startVelocity: 105, spread: 35 });
-  fire(5, { x: W * 0.98, y: H * 0.98, angle: -138, scalar: 0.7, startVelocity: 105, spread: 35 });
+  fire(5, { x: W * 0.02, y: H * 0.98, angle: -42, scalar: 0.7, startVelocity: 140, spread: 35 });
+  fire(5, { x: W * 0.98, y: H * 0.98, angle: -138, scalar: 0.7, startVelocity: 140, spread: 35 });
 
   let alive = pieces.length;
   (function frame() {
@@ -892,10 +916,10 @@ function celebrate() {
       p.flip += p.flipSpeed;
       p.yaw += p.yawSpeed;
       // a falling scrap slips sideways fastest when it's tipped over
-      // a falling scrap slips sideways fastest when it's tipped over
-      p.x += Math.cos(p.angle) * p.velocity + p.drift + Math.sin(p.flip) * p.sway;
-      p.y += Math.sin(p.angle) * p.velocity + p.gravity * (0.75 + 0.25 * Math.abs(Math.cos(p.flip)));
-      p.velocity *= p.decay;
+      p.x += p.vx + p.drift + Math.sin(p.flip) * p.sway;
+      p.y += p.vy;
+      p.vx *= p.decay;
+      p.vy = p.vy * p.decay + p.gravity;   // drag, then gravity accelerating the fall
       const progress = p.tick / p.ticks;
       p.el.style.opacity = progress > 0.8 ? (1 - progress) / 0.2 : 1;   // hold, then fade out
       p.el.style.transform =
@@ -951,7 +975,7 @@ document.addEventListener("click", (e) => {
   if (!$("steps").hidden && !$("steps").contains(e.target)) markMenu(false);
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !$("steps").hidden) { markMenu(false); $("track").querySelector(".mark.current")?.focus(); }
+  if (e.key === "Escape" && !$("steps").hidden) { markMenu(false); document.querySelector(".mark.current")?.focus(); }
 });
 
 document.querySelectorAll("[data-go]").forEach(b => b.onclick = () => show(b.dataset.go));

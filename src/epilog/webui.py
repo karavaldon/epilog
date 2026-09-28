@@ -245,6 +245,13 @@ def api_save_accounts(body: dict) -> dict:
     remove = {h for h in body.get("remove", []) if isinstance(h, str)}
     if remove:
         remove_accounts(remove)
+    if new:
+        # they added accounts here, so a reply to the welcome email shouldn't
+        # also trigger a "first epilog"
+        state = State()
+        if state.welcome_pending:
+            state.welcome_pending = False
+            state.save()
     return {"ok": True, "accounts": read_accounts()}
 
 
