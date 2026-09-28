@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from email.message import Message
 from email.policy import default as default_policy
-from email.utils import parseaddr
+from email.utils import getaddresses, parseaddr
 
 import requests
 
@@ -217,7 +217,7 @@ def _fetch_replies(cfg: Config, processed: set[str], debug: bool = False) -> lis
         wanted = []
         _, headers = imap.uid(
             "FETCH", b",".join(uids),
-            "(FLAGS BODY.PEEK[HEADER.FIELDS (MESSAGE-ID SUBJECT FROM IN-REPLY-TO REFERENCES)])")
+            "(FLAGS BODY.PEEK[HEADER.FIELDS (MESSAGE-ID SUBJECT FROM TO CC IN-REPLY-TO REFERENCES)])")
         ours = f"@{EPILOG_MSGID_DOMAIN}>"
         for part in headers:
             if not isinstance(part, tuple):
@@ -230,11 +230,18 @@ def _fetch_replies(cfg: Config, processed: set[str], debug: bool = False) -> lis
             replying_to_epilog = ours in f"{h['In-Reply-To'] or ''} {h['References'] or ''}"
             if not replying_to_epilog or msg_id.endswith(ours):
                 continue          # not a reply to one of our emails (or is one of ours)
+            # a forward to someone else also references our email — it isn't a reply to us
+            addressed = {_mailbox(a) for _, a in getaddresses(
+                [str(h["To"] or ""), str(h["Cc"] or "")])} & mine
+            forwarded = re.match(r"\s*(fwd?|fw):", subject, re.I)
             if debug:
-                log.info("Reply candidate %s from %s%s%s", subject[:40], sender,
+                log.info("Reply candidate %s from %s%s%s%s%s", subject[:40], sender,
                          " [draft]" if draft else "",
+                         " [forward]" if forwarded else "",
+                         " [not addressed to you]" if not addressed else "",
                          " [already processed]" if msg_id in processed else "")
-            if msg_id and msg_id not in processed and not draft and _mailbox(sender) in mine:
+            if (msg_id and msg_id not in processed and not draft and not forwarded
+                    and addressed and _mailbox(sender) in mine):
                 wanted.append((uid, msg_id, subject))
             elif debug and _mailbox(sender) not in mine:
                 log.info("  ignored: sender isn't %s", " or ".join(sorted(mine)))

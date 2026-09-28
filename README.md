@@ -97,6 +97,10 @@ Everything runs on your computer. Your Instagram token and Gmail app password ar
 
 ## Troubleshooting
 
+- **`uv: command not found`.** Quit Terminal and open it again — the installer
+  adds `uv` to new windows only. Or skip it: Epilog keeps its own Python in the
+  folder, so `.venv/bin/python -m epilog status` works in place of any
+  `uv run epilog …` command.
 - **"Gmail didn't accept that address and app password".** App passwords only work for the Google account that created them. Check which account you were signed in as, then create a fresh one.
 - **"No Facebook Page with a linked Instagram account was found".** Make sure your Instagram is a Business or Creator account and is linked to a Facebook Page, and that you selected that Page when generating the token.
 - **Your epilog didn't arrive.** Your computer may have been asleep or off at delivery time; it'll send when it wakes. Logs are in the `logs` folder, and `uv run epilog status` shows the last send.
