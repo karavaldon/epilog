@@ -4,7 +4,7 @@
 
 Every morning, Epilog sends you one calm email with what your chosen accounts posted: the photos, full captions, every image in multi-photo posts, and a link to watch videos in the app. It runs on your own computer, uses Instagram's official API, and sends from your own Gmail. Nothing else is involved.
 
-<p align="center"><img src="docs/email-preview.jpg" width="360" alt="An Epilog digest email: a column of posts grouped by account, each with its photo and caption"></p>
+<p align="center"><img src="docs/email-preview.jpg" width="360" alt="An Epilog email: a column of posts grouped by account, each with its photo and caption"></p>
 
 Free and open source (MIT). Made by [Kara Valdon](https://karavaldon.com/epilog).
 
@@ -19,7 +19,7 @@ Free and open source (MIT). Made by [Kara Valdon](https://karavaldon.com/epilog)
 
 ## What you'll need
 
-- **A Mac or Linux computer.** It needs to be awake at delivery time; if it's asleep, the digest arrives when it wakes.
+- **A Mac or Linux computer.** It needs to be awake at delivery time; if it's asleep, your epilog arrives when it wakes.
 - **An Instagram account switched to Creator or Business.** This is free, and you can switch back later.
 - **A Facebook Page linked to that Instagram account.** A placeholder Page is fine; nobody needs to see it.
 - **A free Meta developer account**, to create a small personal app
@@ -57,9 +57,9 @@ Setup is a page in your browser that talks only to Epilog on your own computer.
 
 1. **Connect Instagram.** It explains how to make your account professional, link a Page, create a Meta app and generate a token, with links to each page. Then it checks the connection works.
 2. **Connect Gmail.** You create an app password: a separate password just for Epilog, which you can revoke anytime. Epilog sends from your Gmail to yourself and reads your replies to its emails.
-3. **Choose a delivery time.** It schedules the daily digest, plus a check for your replies every 15 minutes.
+3. **Choose a delivery time.** It schedules your daily epilog, plus a check for your replies every 15 minutes.
 4. **Pick accounts.** Paste handles and Epilog checks each one, showing which it can read and which are personal accounts. Or get a welcome email and add them by replying.
-5. **Send your first digest.** Optionally get the past week's posts right away.
+5. **Send your first epilog.** Optionally get the past week's posts right away.
 
 You can stop and restart setup anytime; it remembers finished steps. If you prefer text, run `uv run epilog setup --terminal`.
 
@@ -75,7 +75,7 @@ remove @someone.else
 
 One handle per line, with or without the @. Profile links work too, and so does `add @handle`. You'll get a reply confirming what changed.
 
-**Renewing the Instagram connection:** Meta's connection lasts about 60 days. A week before it expires, your digest will remind you. To renew, run setup again (double-click **Setup Epilog**). It takes about 2 minutes, because you only need a fresh token.
+**Renewing the Instagram connection:** Meta's connection lasts about 60 days. A week before it expires, your epilog will remind you. To renew, run setup again (double-click **Setup Epilog**). It takes about 2 minutes, because you only need a fresh token.
 
 **Changing the delivery time:** run setup again.
 
@@ -85,9 +85,9 @@ One handle per line, with or without the @. Profile links work too, and so does 
 |---|---|
 | `uv run epilog status` | Shows what's connected and scheduled |
 | `uv run epilog check` | Shows which of your accounts Instagram's API can read |
-| `uv run epilog run --dry-run` | Builds today's digest as a web page, without sending it |
+| `uv run epilog run --dry-run` | Builds today's epilog as a web page, without sending it |
 | `uv run epilog demo` | Previews the email design with sample posts |
-| `uv run epilog run --rebuild` | Re-sends the last digest from cache, without asking Instagram again |
+| `uv run epilog run --rebuild` | Re-sends your last epilog from cache, without asking Instagram again |
 | `uv run epilog update` | Installs the newest release, keeping your settings and schedule |
 | `uv run epilog schedule uninstall` | Stops the daily email |
 
@@ -99,7 +99,7 @@ Everything runs on your computer. Your Instagram token and Gmail app password ar
 
 - **"Gmail didn't accept that address and app password".** App passwords only work for the Google account that created them. Check which account you were signed in as, then create a fresh one.
 - **"No Facebook Page with a linked Instagram account was found".** Make sure your Instagram is a Business or Creator account and is linked to a Facebook Page, and that you selected that Page when generating the token.
-- **The digest didn't arrive.** Your computer may have been asleep or off at delivery time; it'll send when it wakes. Logs are in the `logs` folder, and `uv run epilog status` shows the last send.
+- **Your epilog didn't arrive.** Your computer may have been asleep or off at delivery time; it'll send when it wakes. Logs are in the `logs` folder, and `uv run epilog status` shows the last send.
 - **An account shows as "not available".** It's a personal account, or the username has changed.
 - **Windows** isn't supported yet.
 

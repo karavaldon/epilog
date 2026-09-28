@@ -83,7 +83,7 @@ def announcement(release: dict) -> tuple[str, str]:
         "Your settings, accounts, history and delivery time stay as they are, and the\n"
         "previous version is kept in case you want to go back.\n\n"
         f"Release notes: https://github.com/{REPO}/releases/latest\n\n"
-        "(Epilog mentions each new version once. Your digests will note it in the footer\n"
+        "(Epilog mentions each new version once. Your emails will note it in the footer\n"
         "until you update.)\n",
     )
 

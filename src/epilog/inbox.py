@@ -163,7 +163,7 @@ def _confirmation(c: Changes, first_digest: bool = False) -> str:
     n = len(read_accounts())
     lines.append(f"\nYou're following {n} account{'' if n == 1 else 's'} in Epilog.")
     if first_digest:
-        lines.append("Your first digest, with their posts from the past week, is on its way.")
+        lines.append("Your first epilog, with their posts from the past week, is on its way.")
     return "\n".join(lines) + "\n"
 
 

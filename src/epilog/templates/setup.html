@@ -453,8 +453,8 @@
   <section data-screen="time" hidden>
     <div class="card fade">
       <div class="meta"><span>Every day</span></div>
-      <h2>When should your email arrive?</h2>
-      <p class="muted small" id="time-note">Epilog runs on this computer, not on a server somewhere, so it needs to be awake at that time. If it's asleep, the email arrives when you next wake it.</p>
+      <h2>When should your epilog arrive?</h2>
+      <p class="muted small" id="time-note">Epilog runs on this computer, not on a server somewhere, so it needs to be awake at that time. If it's asleep, your epilog arrives when you next wake it.</p>
       <input class="field time" id="time" type="text" inputmode="text" autocomplete="off"
              value="7:00 am" aria-label="Delivery time" placeholder="7:00 am">
       <div class="row"><button class="pill primary" id="time-save">Schedule it →</button></div>
@@ -498,7 +498,7 @@
     </div>
     <div class="card fade" id="first-card">
       <div class="meta"><span>See it now</span></div>
-      <h2>Send my first digest</h2>
+      <h2>Send my first epilog</h2>
       <p class="muted">Posts from the past week, from the accounts you added. It takes a minute or two.</p>
       <div class="row" style="margin-top:0"><button class="pill primary" id="first">Send it now</button></div>
       <div class="status" id="first-status" role="status"></div>
@@ -507,7 +507,7 @@
       <div class="meta"><span>Later</span></div>
       <ol class="how">
         <li><b>Add or remove accounts:</b> reply to any Epilog email with handles, or “remove @handle”.</li>
-        <li><b>Every ~60 days:</b> your digest will remind you to renew Instagram. Open <b>Setup Epilog</b> again and paste a fresh token (about 2 minutes).</li>
+        <li><b>Every ~60 days:</b> your epilog will remind you to renew Instagram. Open <b>Setup Epilog</b> again and paste a fresh token (about 2 minutes).</li>
         <li><b>Change the time:</b> open <b>Setup Epilog</b> again.</li>
       </ol>
       <div class="row"><button class="pill" id="finish">Finish &amp; close setup</button></div>
@@ -683,7 +683,7 @@ function renderInstagram(forceForm = false) {
   $("ig-form").hidden = connected;
   if (connected) {
     $("ig-connected-text").textContent = `Connected as @${ig.username}`;
-    $("ig-connected-note").textContent = ig.renewBy ? `Renew by ${ig.renewBy}. Your digest will remind you a week before.` : "";
+    $("ig-connected-note").textContent = ig.renewBy ? `Renew by ${ig.renewBy}. Your epilog will remind you a week before.` : "";
     return;
   }
   $("app-id").value = $("app-id").value || ig.appId || "";
@@ -756,7 +756,7 @@ $("time-save").onclick = (e) => busy(e.target, async () => {
   status("time-status", "Scheduling…", "busy");
   const r = await api("/api/schedule", { time: $("time").value });
   if (r.error) return status("time-status", r.error, "bad");
-  status("time-status", r.note || `✓ Your email will arrive daily at ${r.label}. Replies are checked every 15 minutes.`, "ok");
+  status("time-status", r.note || `✓ Your epilog will arrive daily at ${r.label}. Replies are checked every 15 minutes.`, "ok");
   S = await api("/api/state");
   setTimeout(() => show(nextAfter("time")), 900);
 });
@@ -828,7 +828,7 @@ $("welcome").onclick = (e) => busy(e.target, async () => {
   const r = await api("/api/welcome", {});
   if (r.error) return status("welcome-status", r.error, "bad");
   S.welcomePending = true;
-  status("welcome-status", `✓ Sent to ${r.to}. Reply with handles; you'll get a confirmation and a first digest within about 15 minutes.`, "ok");
+  status("welcome-status", `✓ Sent to ${r.to}. Reply with handles; you'll get a confirmation and your first epilog within about 15 minutes.`, "ok");
   renderAccounts();
 });
 $("to-done").onclick = () => show("done");
@@ -907,7 +907,7 @@ function renderDone() {
   const items = [
     `Instagram: @${S.instagram.username}` + (S.instagram.renewBy ? ` (renew by ${S.instagram.renewBy})` : ""),
     `Gmail: ${S.gmail.address}`,
-    S.schedule.installed ? `Daily digest at ${fmtTime(S.schedule.time)}` : "Daily digest: not scheduled on this system",
+    S.schedule.installed ? `Your epilog at ${fmtTime(S.schedule.time)}` : "Your epilog: not scheduled on this system",
     S.accounts.length ? `Following ${S.accounts.length} account${S.accounts.length === 1 ? "" : "s"}` : "Accounts: waiting for your reply to the welcome email",
   ];
   $("summary").replaceChildren(...items.map(t => Object.assign(document.createElement("li"), { textContent: t })));
@@ -921,7 +921,7 @@ $("first").onclick = (e) => busy(e.target, async () => {
   status("first-status", "Gathering posts from the past week and sending…", "busy");
   const r = await api("/api/first-digest", {});
   if (r.error) return status("first-status", r.error, "bad");
-  status("first-status", r.posts ? `✓ Sent ${r.posts} post${r.posts === 1 ? "" : "s"} from ${r.accounts} account${r.accounts === 1 ? "" : "s"} to ${r.to}. Check your inbox.` : "Those accounts haven't posted in the past week, so there was nothing to send yet. Your daily digest will pick up new posts.", "ok");
+  status("first-status", r.posts ? `✓ Sent ${r.posts} post${r.posts === 1 ? "" : "s"} from ${r.accounts} account${r.accounts === 1 ? "" : "s"} to ${r.to}. Check your inbox.` : "Those accounts haven't posted in the past week, so there was nothing to send yet. Your daily epilog will pick up new posts.", "ok");
   e.target.textContent = "Sent ✓";
 });
 $("finish").onclick = async () => { try { await api("/api/finish", {}); } catch {} show("closed"); };

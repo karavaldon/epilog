@@ -31,7 +31,7 @@ def cmd_run(args) -> int:
         # re-render the last digest from the cache: no Instagram calls, no state change
         digest = cache.load()
         if digest is None:
-            sys.exit("Nothing cached yet — run a normal digest first.")
+            sys.exit("Nothing cached yet — run a normal epilog first.")
         log.info("Rebuilding the digest of %s (%d posts, cached)",
                  digest.generated_at.strftime("%b %-d"), digest.post_count)
     else:
@@ -173,7 +173,7 @@ def cmd_status(args) -> int:
     if log_file.exists():
         sent = [l for l in log_file.read_text().splitlines() if " Sent " in l]
         if sent:
-            print(f"Last digest:     {sent[-1][:19]}")
+            print(f"Last epilog:     {sent[-1][:19]}")
     return 0
 
 
@@ -271,7 +271,7 @@ def cmd_demo(args) -> int:
     )
     if args.send:
         deliver(load_config(), digest)
-        print(f"Sent a sample digest to {load_config().digest_to}.")
+        print(f"Sent a sample epilog to {load_config().digest_to}.")
         return 0
     html, _, _ = render(digest, inline_images=True)
     PREVIEW_PATH.write_text(html)
@@ -310,13 +310,13 @@ def main() -> None:
     setup.set_defaults(func=cmd_setup)
     sub.add_parser("status", help="show what's connected and scheduled").set_defaults(func=cmd_status)
 
-    run = sub.add_parser("run", help="fetch new posts and email the digest")
+    run = sub.add_parser("run", help="fetch new posts and email your epilog")
     run.add_argument("--dry-run", action="store_true", help="write preview.html instead of sending")
     run.add_argument("--since", type=_duration, help="ignore saved state; include posts from e.g. 48h or 3d")
     run.add_argument("--sample", type=int, metavar="N",
                      help="send N random posts (use with --since); doesn't change what counts as seen")
     run.add_argument("--rebuild", action="store_true",
-                     help="re-render the last digest from the cache — no Instagram calls, state unchanged")
+                     help="re-render the last epilog from the cache — no Instagram calls, state unchanged")
     run.set_defaults(func=cmd_run)
 
     inbox = sub.add_parser("inbox", help="process email replies that add/remove accounts")
@@ -336,7 +336,7 @@ def main() -> None:
     sub.add_parser("setup-token", help="reconnect Instagram only").set_defaults(func=cmd_setup_token)
     sub.add_parser("test-email", help="send a test email via Gmail").set_defaults(func=cmd_test_email)
     demo = sub.add_parser("demo", help="preview the email design with sample data")
-    demo.add_argument("--send", action="store_true", help="email the sample digest to yourself")
+    demo.add_argument("--send", action="store_true", help="email a sample epilog to yourself")
     demo.set_defaults(func=cmd_demo)
 
     args = parser.parse_args()

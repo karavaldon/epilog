@@ -159,7 +159,7 @@ def step_gmail() -> bool:
         if not confirm("Change it?", default=False):
             return True
 
-    say("Epilog sends the digest from your own Gmail, to yourself, and reads your replies to it.\n"
+    say("Epilog sends your epilog from your own Gmail, to yourself, and reads your replies to it.\n"
         "It signs in with an app password — a separate password just for Epilog that you can revoke anytime.\n")
     say(f"{BOLD}1.{RESET} App passwords need 2-Step Verification turned on for your Google account.")
     open_page(TWO_STEP, "Google 2-Step Verification settings")
@@ -194,12 +194,12 @@ def step_schedule() -> bool:
     installed = all(schedule.status().values())
     current = schedule.format_time(*schedule.parse_time(cfg.digest_time))
     if installed:
-        ok(f"Your digest is scheduled daily at {current}.")
+        ok(f"Your epilog is scheduled daily at {current}.")
         if not confirm("Change the time?", default=False):
             return True
 
     while True:
-        answer = ask("What time should your daily digest arrive", current)
+        answer = ask("What time should your epilog arrive", current)
         try:
             hour, minute = schedule.parse_time(answer)
             break
@@ -211,10 +211,10 @@ def step_schedule() -> bool:
     except (schedule.ScheduleError, OSError) as e:
         problem(f"Couldn't set up the schedule: {e}")
         return False
-    ok(f"Scheduled: your digest daily at {schedule.format_time(hour, minute)}, "
+    ok(f"Scheduled: your epilog daily at {schedule.format_time(hour, minute)}, "
        "and a check for your email replies every 15 minutes.")
     if sys.platform == "darwin":
-        say(f"  {DIM}Your Mac needs to be awake; if it's asleep at that time, the digest arrives when it wakes.{RESET}")
+        say(f"  {DIM}Your Mac needs to be awake; if it's asleep at that time, it arrives when it wakes.{RESET}")
     return True
 
 
@@ -224,7 +224,7 @@ def step_accounts() -> bool:
     accounts = read_accounts()
     if accounts:
         ok(f"You're following {len(accounts)} account{'' if len(accounts) == 1 else 's'}. "
-           "Reply to any digest to add more, or “remove @handle”.")
+           "Reply to any epilog to add more, or “remove @handle”.")
         return True
     if state.welcome_pending and not confirm("A welcome email was already sent. Send it again?", default=False):
         return True
@@ -235,7 +235,7 @@ def step_accounts() -> bool:
         return False
     ok(f"Sent a welcome email to {cfg.digest_to}.")
     say(f"\n  {BOLD}Reply to it with the Instagram accounts you want to follow{RESET}, one per line.\n"
-        "  Within about 15 minutes you'll get a confirmation and a first digest of the past week.")
+        "  Within about 15 minutes you'll get a confirmation and your first epilog of the past week.")
     return True
 
 
