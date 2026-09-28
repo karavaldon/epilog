@@ -94,7 +94,7 @@ One handle per line, with or without the @. Profile links work too, and so does 
 
 ## Privacy
 
-Everything runs on your computer. Your Instagram token and Gmail app password are stored in a `.env` file in the Epilog folder, readable only by your user account. Epilog only talks to Instagram's API, the image links Instagram returns, and your Gmail. There's no server, no analytics and no account with anyone else.
+Everything runs on your computer. Your Instagram token and Gmail app password are stored in a `.env` file in the Epilog folder, readable only by your user account. Epilog only talks to Instagram's API, the image links Instagram returns, and your Gmail. There's no server, no analytics and no account with anyone else. The one exception is opt-in: the last setup screen has a "Say hi" button that, if you press it, emails the maker your address so they know someone's using it. Nothing is sent unless you press it.
 
 ## Troubleshooting
 

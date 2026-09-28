@@ -28,14 +28,15 @@ def check_gmail(address: str, app_password: str) -> str | None:
 
 
 def send_email(cfg: Config, subject: str, text: str, html: str | None = None,
-               images: dict[str, bytes] | None = None, in_reply_to: str | None = None) -> None:
+               images: dict[str, bytes] | None = None, in_reply_to: str | None = None,
+               to: str | None = None) -> None:
     if not (cfg.gmail_address and cfg.gmail_app_password):
         raise RuntimeError("GMAIL_ADDRESS and GMAIL_APP_PASSWORD must be set in .env")
 
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = formataddr(("Epilog", cfg.gmail_address))
-    msg["To"] = cfg.digest_to
+    msg["To"] = to or cfg.digest_to
     msg["Message-ID"] = make_msgid(domain=EPILOG_MSGID_DOMAIN)
     if in_reply_to:  # keeps the confirmation in the same Gmail thread
         msg["In-Reply-To"] = in_reply_to

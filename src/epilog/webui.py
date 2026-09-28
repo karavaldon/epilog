@@ -22,7 +22,7 @@ from . import schedule
 from .config import DATA_DIR, add_accounts, load_config, read_accounts, remove_accounts, update_env
 from .graph import AuthError, Graph, GraphError, NotSupported
 from .instagram import ChoosePage, ConnectError, check_connection, connect, pick_page
-from .send import check_gmail
+from .send import check_gmail, send_email
 from .state import State
 from .welcome import send_welcome
 
@@ -37,6 +37,9 @@ except metadata.PackageNotFoundError:  # running straight from a source folder
 IDLE_TIMEOUT = timedelta(minutes=45)
 FIRST_DIGEST_WINDOW = timedelta(days=7)
 MAX_HANDLES = 60
+# Where "say hi" goes, if someone chooses to press it. Nothing is ever sent here
+# on its own — see api_hello.
+HELLO_TO = "karavaldon+epilog@gmail.com"
 
 
 class SetupServer(ThreadingHTTPServer):
@@ -150,6 +153,7 @@ def state() -> dict:
         },
         "accounts": read_accounts(),
         "welcomePending": State().welcome_pending,
+        "saidHello": State().said_hello,
     }
 
 
@@ -255,6 +259,17 @@ def api_save_accounts(body: dict) -> dict:
     return {"ok": True, "accounts": read_accounts()}
 
 
+def api_hello(body: dict) -> dict:
+    """Only ever called by pressing the button: tells the maker someone's using Epilog."""
+    cfg, state = load_config(), State()
+    if state.said_hello:
+        return {"ok": True, "already": True}
+    send_email(cfg, "⁕ Someone set up Epilog", f"{cfg.gmail_address} set up Epilog.\n", to=HELLO_TO)
+    state.said_hello = True
+    state.save()
+    return {"ok": True}
+
+
 def api_welcome(body: dict) -> dict:
     cfg = load_config()
     send_welcome(cfg, State())
@@ -296,7 +311,7 @@ DEMO_NAMES = {"flitchcoffee": "Flitch Coffee", "marthastewart": "Martha Stewart"
 
 def _demo_reset() -> None:
     DEMO.update(on=True, username="", gmail="", time="07:00", scheduled=False,
-                accounts=[], welcome=False)
+                accounts=[], welcome=False, hello=False)
 
 
 def demo_state() -> dict:
@@ -312,6 +327,7 @@ def demo_state() -> dict:
         "schedule": {"supported": True, "installed": DEMO["scheduled"], "time": DEMO["time"]},
         "accounts": DEMO["accounts"],
         "welcomePending": DEMO["welcome"],
+        "saidHello": DEMO.get("hello", False),
     }
 
 
@@ -376,6 +392,12 @@ def demo_save_accounts(body: dict) -> dict:
     return {"ok": True, "accounts": DEMO["accounts"]}
 
 
+def demo_hello(body: dict) -> dict:
+    time.sleep(0.5)
+    DEMO["hello"] = True
+    return {"ok": True}
+
+
 def demo_welcome(body: dict) -> dict:
     time.sleep(0.8)
     DEMO["welcome"] = True
@@ -395,6 +417,7 @@ ROUTES = {
     "/api/accounts/check": api_check_accounts,
     "/api/accounts/save": api_save_accounts,
     "/api/welcome": api_welcome,
+    "/api/hello": api_hello,
     "/api/first-digest": api_first_digest,
     "/api/finish": api_finish,
 }
@@ -406,6 +429,7 @@ DEMO_ROUTES = {
     "/api/accounts/check": demo_check_accounts,
     "/api/accounts/save": demo_save_accounts,
     "/api/welcome": demo_welcome,
+    "/api/hello": demo_hello,
     "/api/first-digest": demo_first_digest,
     "/api/finish": api_finish,
 }

@@ -18,6 +18,8 @@ class State:
         self.welcome_pending: bool = data.get("welcome_pending", False)
         # the release we've already emailed about, so it's mentioned once
         self.update_announced: str = data.get("update_announced", "")
+        # True once they've chosen to tell the maker they're using Epilog
+        self.said_hello: bool = data.get("said_hello", False)
 
     def get(self, username: str) -> datetime | None:
         value = self.last_seen.get(username)
@@ -37,5 +39,6 @@ class State:
             "processed_replies": self.processed_replies,
             "welcome_pending": self.welcome_pending,
             "update_announced": self.update_announced,
+            "said_hello": self.said_hello,
         }
         STATE_PATH.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")

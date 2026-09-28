@@ -510,6 +510,13 @@
       <div class="row"><button class="pill primary" id="first">Send it now</button></div>
       <div class="status" id="first-status" role="status"></div>
     </div>
+    <div class="card fade" id="hello-card">
+      <div class="meta"><span>Say hi</span></div>
+      <h2>Let the maker know you're using Epilog</h2>
+      <p class="muted">Epilog keeps no accounts and has no server, so nobody knows you've set it up. If you'd like to say hi, this sends one email from your Gmail with your address in it — nothing about the accounts you follow, and nothing else.</p>
+      <div class="row"><button class="pill small" id="hello">Say hi</button></div>
+      <div class="status" id="hello-status" role="status"></div>
+    </div>
     <div class="card fade">
       <div class="meta"><span>Later</span></div>
       <ol class="how">
@@ -934,6 +941,7 @@ function celebrate() {
 
 function renderDone() {
   celebrate();
+  renderHello();
   const items = [
     `Instagram: @${S.instagram.username}` + (S.instagram.renewBy ? ` (renew by ${S.instagram.renewBy})` : ""),
     `Gmail: ${S.gmail.address}`,
@@ -954,6 +962,20 @@ $("first").onclick = (e) => busy(e.target, async () => {
   status("first-status", r.posts ? `✓ Sent ${r.posts} post${r.posts === 1 ? "" : "s"} from ${r.accounts} account${r.accounts === 1 ? "" : "s"} to ${r.to}. Check your inbox.` : "Those accounts haven't posted in the past week, so there was nothing to send yet. Your daily epilog will pick up new posts.", "ok");
   e.target.textContent = "Sent ✓";
 });
+$("hello").onclick = (e) => busy(e.target, async () => {
+  status("hello-status", "Sending…", "busy");
+  const r = await api("/api/hello", {});
+  if (r.error) return status("hello-status", r.error, "bad");
+  S.saidHello = true;
+  renderHello();
+  status("hello-status", r.already ? "Already sent — thanks." : "Thanks, sent.", "ok");
+});
+
+function renderHello() {
+  $("hello").hidden = !!S.saidHello;
+  if (S.saidHello) status("hello-status", "Thanks, sent.", "ok");
+}
+
 $("finish").onclick = async () => { try { await api("/api/finish", {}); } catch {} show("closed"); };
 
 // ---------------------------------------------------------------- shared
