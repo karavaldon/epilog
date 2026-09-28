@@ -47,6 +47,47 @@ def available(current: str) -> tuple[bool, str]:
     return _version_tuple(tag) > _version_tuple(current), tag
 
 
+def newer_release(current: str) -> dict | None:
+    """The published release if it's newer than `current`, else None.
+    Never raises: a digest shouldn't fail because GitHub is unreachable."""
+    try:
+        release = latest_release()
+    except UpdateError as e:
+        log.debug("Update check skipped: %s", e)
+        return None
+    tag = release.get("tag_name", "")
+    return release if _version_tuple(tag) > _version_tuple(current) else None
+
+
+def _plain_notes(body: str, lines: int = 12) -> str:
+    """GitHub notes are Markdown; emails are plain text."""
+    out = []
+    for line in body.strip().splitlines()[:lines]:
+        line = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", line)   # links → their text
+        line = re.sub(r"[*_`]{1,2}", "", line)                 # bold/italic/code marks
+        line = re.sub(r"^#+\s*", "", line)                     # headings
+        out.append(line.rstrip())
+    text = "\n".join(out).strip()
+    return text + "\n\n" if text else ""
+
+
+def announcement(release: dict) -> tuple[str, str]:
+    """Subject and body for the one-time 'there's a new version' email."""
+    tag = release.get("tag_name", "")
+    notes = _plain_notes(release.get("body") or "")
+    return (
+        f"⁕ Epilog {tag} is available",
+        f"A new version of Epilog is out.\n\n{notes}"
+        "To install it, open the Epilog folder in Terminal and run:\n\n"
+        "  uv run epilog update\n\n"
+        "Your settings, accounts, history and delivery time stay as they are, and the\n"
+        "previous version is kept in case you want to go back.\n\n"
+        f"Release notes: https://github.com/{REPO}/releases/latest\n\n"
+        "(Epilog mentions each new version once. Your digests will note it in the footer\n"
+        "until you update.)\n",
+    )
+
+
 def _download(release: dict) -> bytes:
     assets = release.get("assets") or []
     url = next((a["browser_download_url"] for a in assets if a["name"].endswith(".zip")),

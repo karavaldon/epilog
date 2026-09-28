@@ -54,6 +54,9 @@ def cmd_run(args) -> int:
         keep_random_posts(digest, args.sample)
         newest = {}  # a sample is a one-off: don't advance what counts as "seen"
 
+    if not args.dry_run:
+        _note_update(cfg, digest, state)
+
     if args.dry_run:
         html, _, _ = render(digest, inline_images=True)
         PREVIEW_PATH.write_text(html)
@@ -77,6 +80,28 @@ def cmd_inbox(args) -> int:
     if args.debug:
         print(f"Reading {cfg.gmail_address}; replies accepted from that address or {cfg.digest_to}.")
     return 0 if _process_replies(cfg, State(), debug=args.debug) is not None else 1
+
+
+def _note_update(cfg: Config, digest, state: State) -> None:
+    """Mentions a newer release in the footer, and once by email."""
+    from . import update
+    from .render import VERSION
+
+    release = update.newer_release(VERSION)
+    if not release:
+        return
+    tag = release.get("tag_name", "")
+    digest.update_available = tag
+    if state.update_announced != tag:
+        subject, body = update.announcement(release)
+        try:
+            send_email(cfg, subject, body)
+            log.info("Told you about %s", tag)
+        except Exception as e:  # noqa: BLE001 — never let this stop the digest
+            log.warning("Couldn't send the update notice: %s", e)
+            return
+        state.update_announced = tag
+        state.save()
 
 
 def _process_replies(cfg: Config, state: State, debug: bool = False) -> int | None:

@@ -16,6 +16,8 @@ class State:
         self.processed_replies: list[str] = data.get("processed_replies", [])
         # True between sending the welcome email and the first reply that adds accounts.
         self.welcome_pending: bool = data.get("welcome_pending", False)
+        # the release we've already emailed about, so it's mentioned once
+        self.update_announced: str = data.get("update_announced", "")
 
     def get(self, username: str) -> datetime | None:
         value = self.last_seen.get(username)
@@ -34,5 +36,6 @@ class State:
             "last_seen": self.last_seen,
             "processed_replies": self.processed_replies,
             "welcome_pending": self.welcome_pending,
+            "update_announced": self.update_announced,
         }
         STATE_PATH.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")

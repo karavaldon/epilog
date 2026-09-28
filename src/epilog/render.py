@@ -42,6 +42,7 @@ class Digest:
     generated_at: datetime = field(default_factory=lambda: datetime.now().astimezone())
     part: int = 1        # a heavy day is split across several emails
     parts: int = 1
+    update_available: str = ""   # tag of a newer release, if there is one
 
     @property
     def post_count(self) -> int:

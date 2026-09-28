@@ -29,6 +29,9 @@ To add accounts, reply to this email with their handles, one per line ("add @han
 These Personal accounts are not available: {% for u in d.unsupported %}@{{ u }}{% if not loop.last %}, {% endif %}{% endfor %}
 {% endif %}
 
-⁕ Epilog is a free, open-source project using Instagram's official API
+{% if d.update_available %}
+Epilog {{ d.update_available }} is available — run `uv run epilog update` in your Epilog folder.
+
+{% endif %}⁕ Epilog is a free, open-source project using Instagram's official API
 
 © 2026 · v{{ version }} · Made by K.V. — https://karavaldon.com/epilog
