@@ -79,8 +79,13 @@ def _send_first_digest(cfg: Config, state: State) -> None:
     save_seen(state, newest)
 
 
+def _quoted_out(body: str) -> str:
+    """Just what they typed, without the epilog quoted underneath."""
+    return QUOTE_START.split(body, maxsplit=1)[0]
+
+
 def parse_handles(body: str) -> tuple[list[str], list[str]]:
-    text = QUOTE_START.split(body, maxsplit=1)[0]
+    text = _quoted_out(body)
     adds: list[str] = []
     removes: list[str] = []
     for raw in text.splitlines():

@@ -46,8 +46,10 @@ def send_email(cfg: Config, subject: str, text: str, html: str | None = None,
         msg.add_alternative(html, subtype="html")
         html_part = msg.get_payload()[1]
         for cid, data in (images or {}).items():
-            html_part.add_related(data, maintype="image", subtype="jpeg", cid=f"<{cid}>",
-                                  disposition="inline", filename=f"{cid.split('@')[0]}.jpg")
+            subtype = "gif" if data[:3] == b"GIF" else "jpeg"   # video previews are GIFs
+            html_part.add_related(data, maintype="image", subtype=subtype, cid=f"<{cid}>",
+                                  disposition="inline",
+                                  filename=f"{cid.split('@')[0]}.{'gif' if subtype == 'gif' else 'jpg'}")
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=60) as smtp:
         smtp.login(cfg.gmail_address, cfg.gmail_app_password)

@@ -45,6 +45,17 @@ class Digest:
     update_available: str = ""   # tag of a newer release, if there is one
 
     @property
+    def entries(self) -> list[tuple[Account, "object"]]:
+        """Every post, newest first, each paired with the account that posted it —
+        so the email reads as a timeline rather than grouped by account."""
+        pairs = [(a, p) for a in self.accounts for p in a.posts]
+        return sorted(pairs, key=lambda ap: ap[1].timestamp, reverse=True)
+
+    @property
+    def has_video_links(self) -> bool:
+        return any(p.video_hours for a in self.accounts for p in a.posts)
+
+    @property
     def post_count(self) -> int:
         return sum(len(a.posts) for a in self.accounts)
 
@@ -99,45 +110,19 @@ def _square(img: Image.Image) -> Image.Image:
     return img.crop((left, top, left + side, top + side))
 
 
-PLAY_LABEL = "Play in app"
-PLAY_FONT_PX = 13  # display size
-FONT_PATHS = ("/System/Library/Fonts/Helvetica.ttc", "/System/Library/Fonts/SFNS.ttf",
-              "/Library/Fonts/Arial.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
-
-
-def _font(px: int) -> ImageFont.FreeTypeFont:
-    for path in FONT_PATHS:
-        try:
-            return ImageFont.truetype(path, px)
-        except OSError:
-            continue
-    return ImageFont.load_default(size=px)
+PLAY_LABEL = "Play"
 
 
 def _add_play_icon(img: Image.Image) -> Image.Image:
-    """Bakes a "▶ Play in app" pill into the thumbnail — email clients can't layer elements reliably."""
-    ss = 4  # draw big, then downsample for smooth edges
-    fs = PLAY_FONT_PX * RETINA * ss
-    font = _font(fs)
-    left, top, right, bottom = font.getbbox(PLAY_LABEL)
-    text_w, text_h = right - left, bottom - top
-    tri, gap, pad_x, pad_y = fs * 0.7, fs * 0.45, fs * 0.85, fs * 0.6
-    w = int(pad_x * 2 + tri + gap + text_w)
-    h = int(pad_y * 2 + max(text_h, tri))
+    """Bakes the pill into a still — email clients can't layer elements reliably."""
+    from .badge import pill
 
-    pill = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(pill)
-    draw.rounded_rectangle((0, 0, w - 1, h - 1), radius=h / 2, fill=(0, 0, 0, 165))
-    cy = h / 2
-    draw.polygon([(pad_x, cy - tri / 2), (pad_x, cy + tri / 2), (pad_x + tri * 0.87, cy)], fill="white")
-    draw.text((pad_x + tri + gap, cy), PLAY_LABEL, font=font, fill="white", anchor="lm")
-
-    pill = pill.resize((w // ss, h // ss), Image.LANCZOS)
-    if pill.width > img.width * 0.9:  # very narrow thumbnails: shrink to fit
-        k = img.width * 0.9 / pill.width
-        pill = pill.resize((int(pill.width * k), int(pill.height * k)), Image.LANCZOS)
+    badge = pill(PLAY_LABEL)
+    if badge.width > img.width * 0.9:          # very narrow thumbnails: shrink to fit
+        k = img.width * 0.9 / badge.width
+        badge = badge.resize((int(badge.width * k), int(badge.height * k)), Image.LANCZOS)
     base = img.convert("RGBA")
-    base.alpha_composite(pill, ((img.width - pill.width) // 2, (img.height - pill.height) // 2))
+    base.alpha_composite(badge, ((img.width - badge.width) // 2, (img.height - badge.height) // 2))
     return base.convert("RGB")
 
 
@@ -176,7 +161,7 @@ def _collect(digest: Digest, inline_images: bool, budget_bytes: int | None):
     imgs: dict[str, Img] = {}
     spent = 0
 
-    def add(key: str, img: Image.Image, data: bytes | None = None) -> int:
+    def add(key: str, img: Image.Image, data: bytes | None = None, retina: bool = True) -> int:
         nonlocal spent
         data = data or _jpeg(img)
         if inline_images:
@@ -185,21 +170,34 @@ def _collect(digest: Digest, inline_images: bool, budget_bytes: int | None):
             cid = f"{key}@epilog"
             images[cid] = data
             src = f"cid:{cid}"
-        imgs[key] = Img(src, round(img.width / RETINA), round(img.height / RETINA))
+        scale = RETINA if retina else 1
+        imgs[key] = Img(src, round(img.width / scale), round(img.height / scale))
         spent += len(data)
         return len(data)
 
-    def post_images(p) -> list[tuple[str, Image.Image, bytes, bool]]:
-        """Loads and resizes every photo of a post, encoded once so its weight is known.
-        Photos already prepared for an earlier render come straight from the cache."""
-        from . import cache
+    def post_images(p) -> list[tuple[str, Image.Image, bytes, bool, bool]]:
+        """Prepares every frame of a post: photos as JPEGs, videos as a short looping
+        GIF where one can be made (falling back to the still with a play badge).
+        Anything prepared for an earlier render comes straight from the cache."""
+        from . import cache, clips
 
         out = []
         for i, item in enumerate(p.items):
             key = f"post-{p.id}-{i}"
+            if item.is_video and item.video_url:
+                # how long Instagram's link lasts, cached preview or not
+                if hours := clips.link_hours(item.video_url):
+                    p.video_hours = hours
             if data := cache.image(key):
-                out.append((key, Image.open(io.BytesIO(data)), data, item.is_video))
+                im = Image.open(io.BytesIO(data))
+                out.append((key, im, data, item.is_video, data[:3] == b"GIF"))
                 continue
+
+            if item.is_video and (gif := clips.preview(item.video_url)):
+                cache.store_image(key, gif)
+                out.append((key, Image.open(io.BytesIO(gif)), gif, True, True))
+                continue
+
             if not (im := _load(item.url)):
                 continue
             if item.is_video:
@@ -209,7 +207,7 @@ def _collect(digest: Digest, inline_images: bool, budget_bytes: int | None):
                 im.thumbnail((POST_WIDTH * RETINA, POST_WIDTH * RETINA * 5 // 4), Image.LANCZOS)
             data = _jpeg(im)
             cache.store_image(key, data)
-            out.append((key, im, data, item.is_video))
+            out.append((key, im, data, item.is_video, False))
         return out
 
     media: dict[str, list[Img]] = {}  # post id → one image per carousel item
@@ -238,7 +236,7 @@ def _collect(digest: Digest, inline_images: bool, budget_bytes: int | None):
                 spill.append(p)
                 continue
             loaded = post_images(p)
-            weight = sum(len(data) for _, _, data, _ in loaded)
+            weight = sum(len(data) for _, _, data, _, _ in loaded)
             # keep whole posts together: start a new email rather than split one
             # (count > 0 so a single huge post still goes out rather than looping)
             if count and budget_bytes and (spent + weight > budget_bytes or count + len(loaded) > MAX_IMAGES):
@@ -246,11 +244,16 @@ def _collect(digest: Digest, inline_images: bool, budget_bytes: int | None):
                 spill.append(p)
                 continue
             media[p.id] = []
-            for key, im, data, is_video in loaded:
-                add(key, im, data)
+            for key, im, data, is_video, is_gif in loaded:
+                add(key, im, data, retina=not is_gif)
                 count += 1
                 i = int(key.rsplit("-", 1)[1])
-                href = f"{p.permalink}?img_index={i + 1}" if p.kind == "carousel" else p.permalink
+                if is_gif:            # tapping the preview plays the video itself
+                    href = p.items[i].video_url or p.permalink
+                elif p.kind == "carousel":
+                    href = f"{p.permalink}?img_index={i + 1}"
+                else:
+                    href = p.permalink
                 media[p.id].append(replace(imgs[key], is_video=is_video, href=href))
             here.append(p)
 

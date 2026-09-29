@@ -42,12 +42,9 @@
   <tr><td style="font-family:{{ sans }};font-size:15px;color:{{ muted }};">No new posts since the last digest.</td></tr>
   {% endif %}
 
-  {% for a in d.accounts %}
+  {% for a, p in d.entries %}
   <!-- @{{ a.username }} -->
-  {% if not loop.first %}
-  <tr><td style="padding:4px 0 28px;"><div style="height:2px;line-height:2px;font-size:0;background:#e0e0e0;">&nbsp;</div></td></tr>
-  {% endif %}
-  <tr><td style="padding:0 0 12px;">
+  <tr><td style="padding:{{ '0' if loop.first else '48px' }} 0 12px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
       <td width="36" style="padding-right:10px;vertical-align:middle;">
         {% set av = img.get("avatar-" ~ a.username) %}
@@ -59,19 +56,18 @@
       </td>
       <td style="vertical-align:middle;font-family:{{ sans }};">
         <div style="color:{{ ink }};font-size:15px;font-weight:600;line-height:1.2;">{{ a.name }}</div>
-        <div style="font-family:{{ mono }};font-size:12px;color:{{ muted }};line-height:1.4;">@{{ a.username }} · {{ a.posts|length }} new</div>
+        <div style="font-family:{{ mono }};font-size:12px;color:{{ muted }};line-height:1.4;">@{{ a.username }}</div>
       </td>
     </tr></table>
   </td></tr>
 
-  {% for p in a.posts %}
   {% set items = media.get(p.id, []) %}
-  <tr><td style="padding:0 0 28px;">
+  <tr><td style="padding:0;">
     {% for m in items %}
     {% set spacing = "margin-top:" ~ gap ~ "px;" if not loop.first else "" %}
     {% if m.is_video %}
     <div style="text-align:center;line-height:0;background:#f2f2f2;{{ spacing }}">
-      <a href="{{ m.href }}" style="display:inline-block;line-height:0;"><img src="{{ m.src }}" width="{{ m.width }}" height="{{ m.height }}" alt="Play in app: video by @{{ a.username }}" style="display:inline-block;width:{{ m.width }}px;max-width:100%;height:auto;border:0;"></a>
+      <a href="{{ m.href }}" style="display:inline-block;line-height:0;"><img src="{{ m.src }}" width="{{ m.width }}" height="{{ m.height }}" alt="Play the video by @{{ a.username }}" style="display:inline-block;width:{{ m.width }}px;max-width:100%;height:auto;border:0;"></a>
     </div>
     {% else %}
     <a href="{{ m.href }}" style="display:block;line-height:0;{{ spacing }}"><img src="{{ m.src }}" width="{{ m.width }}" alt="{{ 'Photo ' ~ loop.index ~ ' of ' ~ p.count if p.kind == 'carousel' else 'Post' }} by @{{ a.username }}" style="display:block;width:100%;max-width:{{ m.width }}px;height:auto;border:0;"></a>
@@ -79,7 +75,7 @@
     {% endfor %}
     <div style="font-family:{{ sans }};padding-top:{{ '10px' if items else '0' }};">
       <a href="{{ p.permalink }}" style="font-family:{{ mono }};font-size:11px;line-height:1.4;color:{{ faint }};text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;">
-        {{ p.timestamp|when }}{% if p.kind == "video" %} · Video{% elif p.kind == "carousel" %} · {{ p.count }} photos{% endif %}
+        {{ p.timestamp|when }}{% if p.video_hours %} · video link available for {{ p.video_hours }} hours{% elif p.kind == "video" %} · Video{% elif p.kind == "carousel" %} · {{ p.count }} photos{% endif %}
       </a>
       {% if p.caption %}
       <div style="font-size:14px;line-height:1.5;color:{{ ink }};padding-top:4px;">{{ p.caption|nl2br }}</div>
@@ -87,14 +83,17 @@
     </div>
   </td></tr>
   {% endfor %}
-  {% endfor %}
 
   <!-- Footer -->
   <tr><td style="padding:24px 0 0;font-family:{{ mono }};font-size:12px;line-height:1.7;color:{{ faint }};border-top:2px solid #e0e0e0;">
     {% if d.failed %}
     <div style="padding-bottom:8px;">Couldn't reach {% for u, err in d.failed %}@{{ u }}{% if not loop.last %}, {% endif %}{% endfor %} today (connection problem). Their new posts will be in the next digest.</div>
     {% endif %}
-    <div style="padding-bottom:14px;">To add accounts, reply to this email with their handles, one per line (“add @handle” works too). To stop following one, reply “remove @handle”. Accounts must be Creators or Businesses.</div>
+    <div style="padding-bottom:14px;">To add accounts, reply to this email with their handles, one per line (“add @handle” works too). Accounts must be Creators or Businesses.</div>
+    <div style="padding-bottom:14px;">To stop following someone, reply “remove @handle”.</div>
+    {% if d.has_video_links %}
+    <div style="padding-bottom:14px;">Video links in this email can be streamed on your device for a day or so.</div>
+    {% endif %}
     {% if d.unsupported %}
     <div style="padding-bottom:14px;">These Personal accounts are not available: {% for u in d.unsupported %}@{{ u }}{% if not loop.last %}, {% endif %}{% endfor %}</div>
     {% endif %}

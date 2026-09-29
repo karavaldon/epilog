@@ -81,7 +81,7 @@ def load() -> Digest | None:
         Account(a["username"], a["name"], a["avatar_url"], [
             Post(id=p["id"], permalink=p["permalink"], caption=p["caption"],
                  timestamp=datetime.fromisoformat(p["timestamp"]), kind=p["kind"],
-                 items=[Media(m["url"], m["is_video"]) for m in p["items"]])
+                 items=[Media(m["url"], m["is_video"], m.get("video_url")) for m in p["items"]])
             for p in a["posts"]])
         for a in data["accounts"]
     ]

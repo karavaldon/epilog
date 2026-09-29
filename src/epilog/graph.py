@@ -45,6 +45,7 @@ class RateLimited(GraphError):
 class Media:
     url: str | None  # image, or the thumbnail for a video
     is_video: bool = False
+    video_url: str | None = None   # the mp4 itself, for videos
 
 
 @dataclass
@@ -55,6 +56,7 @@ class Post:
     timestamp: datetime
     kind: str  # "image" | "video" | "carousel"
     items: list[Media]  # one per photo/video; several for a carousel
+    video_hours: int | None = None   # how long Instagram's own link lasts
 
     @property
     def count(self) -> int:
@@ -179,5 +181,5 @@ def _parse_post(m: dict) -> Post | None:
 
 def _media_of(item: dict) -> Media:
     if item.get("media_type") == "VIDEO":
-        return Media(item.get("thumbnail_url"), is_video=True)
+        return Media(item.get("thumbnail_url"), is_video=True, video_url=item.get("media_url"))
     return Media(item.get("media_url"))
