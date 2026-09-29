@@ -139,9 +139,32 @@ def install(release: dict) -> str:
             old.chmod(0o755)
     shutil.rmtree(staging, ignore_errors=True)
 
-    if uv := shutil.which("uv"):              # refresh dependencies and the version metadata
-        subprocess.run([uv, "sync", "--quiet"], cwd=DATA_DIR, capture_output=True)
-    else:
-        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-e", "."],
-                       cwd=DATA_DIR, capture_output=True)
+    _sync()
     return str(DATA_DIR)
+
+
+def _find_uv() -> str | None:
+    """uv often isn't on PATH in a fresh Terminal, so look where it installs itself."""
+    if found := shutil.which("uv"):
+        return found
+    for guess in (Path.home() / ".local/bin/uv", Path("/opt/homebrew/bin/uv"),
+                  Path("/usr/local/bin/uv"), Path.home() / ".cargo/bin/uv"):
+        if guess.exists():
+            return str(guess)
+    return None
+
+
+def _sync() -> None:
+    """Installs any new dependencies and refreshes the version metadata.
+    Without this the new code runs but, for example, video previews stay off."""
+    if uv := _find_uv():
+        result = subprocess.run([uv, "sync", "--quiet"], cwd=DATA_DIR, capture_output=True)
+        if result.returncode == 0:
+            return
+        log.warning("uv sync failed: %s", result.stderr.decode()[:200])
+    result = subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-e", "."],
+                            cwd=DATA_DIR, capture_output=True)
+    if result.returncode != 0:
+        raise UpdateError(
+            "The new files are in place, but installing their dependencies failed. "
+            "Run ./setup.sh in the Epilog folder to finish the update.")
