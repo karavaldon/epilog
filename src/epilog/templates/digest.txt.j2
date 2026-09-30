@@ -13,7 +13,7 @@ No new posts since the last digest.
 
 
 {{ a.name }} (@{{ a.username }})
-  {{ p.timestamp|when }}{% if p.video_hours %} · video link available for {{ p.video_hours }} hours{% elif p.kind == "video" %} · Video{% elif p.kind == "carousel" %} · {{ p.count }} photos{% endif %}
+  {{ p.timestamp|when }}{% if p.video_hours %} · video link available for {{ p.video_hours }} hours{% elif p.kind == "video" %} · video plays in Instagram{% elif p.kind == "carousel" %} · {{ p.count }} photos{% endif %}
 
   {{ p.caption|replace("\n", " ") }}
   {{ p.permalink }}

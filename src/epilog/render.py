@@ -117,10 +117,12 @@ def _add_play_icon(img: Image.Image) -> Image.Image:
     """Bakes the pill into a still — email clients can't layer elements reliably."""
     from .badge import pill
 
-    badge = pill(PLAY_LABEL)
-    if badge.width > img.width * 0.9:          # very narrow thumbnails: shrink to fit
-        k = img.width * 0.9 / badge.width
-        badge = badge.resize((int(badge.width * k), int(badge.height * k)), Image.LANCZOS)
+    # the same pill the GIF previews carry, drawn at 2x because the still is a
+    # retina image shown at half size
+    badge = pill(PLAY_LABEL, font_px=16 * RETINA)
+    if badge.width > (target := img.width * 0.4):   # narrow stills: keep it to its share
+        k = target / badge.width
+        badge = badge.resize((round(badge.width * k), round(badge.height * k)), Image.LANCZOS)
     base = img.convert("RGBA")
     base.alpha_composite(badge, ((img.width - badge.width) // 2, (img.height - badge.height) // 2))
     return base.convert("RGB")
@@ -184,9 +186,13 @@ def _collect(digest: Digest, inline_images: bool, budget_bytes: int | None):
         out = []
         for i, item in enumerate(p.items):
             key = f"post-{p.id}-{i}"
-            if item.is_video and item.video_url:
+            if item.is_video:
+                if not item.video_url:
+                    # Instagram omits media_url for some videos - no preview and no
+                    # stream link, so the still has to point at Instagram itself
+                    log.info("No video file from Instagram for %s", p.permalink)
                 # how long Instagram's link lasts, cached preview or not
-                if hours := clips.link_hours(item.video_url):
+                elif hours := clips.link_hours(item.video_url):
                     p.video_hours = hours
             if data := cache.image(key):
                 im = Image.open(io.BytesIO(data))
