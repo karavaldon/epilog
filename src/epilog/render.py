@@ -110,7 +110,9 @@ def _square(img: Image.Image) -> Image.Image:
     return img.crop((left, top, left + side, top + side))
 
 
-PLAY_LABEL = "Play"
+# these stills are videos Instagram gave us no file for, so they open the app;
+# the GIF previews in clips.py say just "Play" because they stream in a browser
+PLAY_LABEL = "Play in app"
 
 
 def _add_play_icon(img: Image.Image) -> Image.Image:
@@ -120,7 +122,7 @@ def _add_play_icon(img: Image.Image) -> Image.Image:
     # the same pill the GIF previews carry, drawn at 2x because the still is a
     # retina image shown at half size
     badge = pill(PLAY_LABEL, font_px=16 * RETINA)
-    if badge.width > (target := img.width * 0.4):   # narrow stills: keep it to its share
+    if badge.width > (target := img.width * 0.8):   # narrow stills: keep it inside the frame
         k = target / badge.width
         badge = badge.resize((round(badge.width * k), round(badge.height * k)), Image.LANCZOS)
     base = img.convert("RGBA")
