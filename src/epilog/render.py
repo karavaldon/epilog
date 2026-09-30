@@ -169,7 +169,8 @@ def _collect(digest: Digest, inline_images: bool, budget_bytes: int | None):
         nonlocal spent
         data = data or _jpeg(img)
         if inline_images:
-            src = "data:image/jpeg;base64," + base64.b64encode(data).decode()
+            kind = "gif" if data[:3] == b"GIF" else "jpeg"   # video previews are GIFs
+            src = f"data:image/{kind};base64," + base64.b64encode(data).decode()
         else:
             cid = f"{key}@epilog"
             images[cid] = data
