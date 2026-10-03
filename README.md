@@ -6,7 +6,7 @@ Every morning, Epilog sends you one calm email with what your chosen accounts po
 
 <p align="center"><img src="docs/email-preview.jpg" width="360" alt="An Epilog email: a column of posts grouped by account, each with its photo and caption"></p>
 
-Free and open source (MIT). Made by [Kara Valdon](https://karavaldon.com/epilog).
+Free and open source (MIT). Made by [Kara Valdon](https://karavaldon.com/work/epilog).
 
 ---
 

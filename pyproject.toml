@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://karavaldon.com/epilog"
+Homepage = "https://karavaldon.com/work/epilog"
 
 [project.scripts]
 epilog = "epilog.cli:main"
